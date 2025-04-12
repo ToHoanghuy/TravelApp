@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { RootStackParamList } from '@/types/navigation'
 import WelcomeScreen1 from '@/screens/WelcomeScreen/WelcomeScreen1'
+import { UserProvider } from '@/context/UserContext'
 
 (Text as any).defaultProps = (Text as any).defaultProps || {};
 (Text as any).defaultProps.style = { fontFamily: 'UTMTimesBold'};
@@ -16,8 +17,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>()
 export default function App() {
   return (
     
-      <NavigationContainer>
-            <Stack.Navigator
+      <NavigationContainer >
+        <UserProvider>
+        <Stack.Navigator
             initialRouteName='welcome1'>
                 <Stack.Screen 
                 name = "welcome1" 
@@ -28,6 +30,8 @@ export default function App() {
                 }}/>
 
             </Stack.Navigator>
+        </UserProvider>
+            
       </NavigationContainer>
     
    
