@@ -6,5 +6,9 @@
     'login': undefined;
     'register': undefined;
     'register2': undefined;
+    'main-screen': undefined;
+    'collection-screen': undefined;
+    'booking-screen': undefined;
+    'personal-information-screen': undefined;
   };
   

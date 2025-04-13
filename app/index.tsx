@@ -7,12 +7,11 @@ import { UserProvider } from '@/context/UserContext'
 import LoginScreen from '@/screens/WelcomeScreen/LoginScreen'
 import RegisterScreen from '@/screens/WelcomeScreen/RegisterScreen'
 import RegisterScreen2 from '@/screens/WelcomeScreen/RegisterScreen2'
+import MainScreen from '@/screens/MainScreen'
 (Text as any).defaultProps = (Text as any).defaultProps || {};
 (Text as any).defaultProps.style = { fontFamily: 'UTMTimesBold'};
 
 import React from 'react'
-
-
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -45,6 +44,13 @@ export default function App() {
                 <Stack.Screen 
                 name = "register2" 
                 component={RegisterScreen2}
+                options={{
+                headerShown: false
+                }}/>
+
+            <Stack.Screen 
+                name = "main-screen"
+                component={MainScreen}
                 options={{
                 headerShown: false
                 }}/>
