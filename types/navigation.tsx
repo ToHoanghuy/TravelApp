@@ -10,5 +10,6 @@
     'collection-screen': undefined;
     'booking-screen': undefined;
     'notifications-screen': undefined;
+    'personal-information-screen': undefined;
   };
   
