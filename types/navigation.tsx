@@ -12,5 +12,6 @@
     'notifications-screen': undefined;
     'personal-information-screen': undefined;
     'voucher-screen': undefined;
+    'add-new-collection-screen': undefined;
   };
   
