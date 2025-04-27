@@ -10,6 +10,7 @@ import RegisterScreen2 from '@/screens/WelcomeScreen/RegisterScreen2'
 import MainScreen from '@/screens/MainScreen'
 import NotificationsScreen from '@/screens/NotificationsScreen'
 import PersonalInformationScreen from '@/screens/PersonalInformationScreen'
+import VoucherScreen from '@/screens/VoucherScreen'
 (Text as any).defaultProps = (Text as any).defaultProps || {};
 (Text as any).defaultProps.style = { fontFamily: 'UTMTimesBold'};
 
@@ -65,6 +66,12 @@ export default function App() {
                 <Stack.Screen 
                 name = "personal-information-screen"
                 component={PersonalInformationScreen}
+                options={{
+                headerShown: false
+                }}/>
+                <Stack.Screen 
+                name = "voucher-screen"
+                component={VoucherScreen}
                 options={{
                 headerShown: false
                 }}/>

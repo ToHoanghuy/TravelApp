@@ -11,5 +11,6 @@
     'booking-screen': undefined;
     'notifications-screen': undefined;
     'personal-information-screen': undefined;
+    'voucher-screen': undefined;
   };
   
