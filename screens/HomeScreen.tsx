@@ -4,6 +4,10 @@ import {View, Text, StyleSheet, TextInput, FlatList, ScrollView, TouchableOpacit
 
 import CategoryItem from "@/components/HomeScreen/CategoryItem";
 import categoryData from '@/constants/category';
+import RecommendedSection from '@/components/HomeScreen/RecommendedSection';
+import PopularSection from '@/components/HomeScreen/PopularSection';
+import DailySection from '@/components/HomeScreen/DailySection';
+import NewEventSection from '@/components/HomeScreen/NewEvent';
 
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import styles from '../StyleSheet/HomeScreenStyles'; 
@@ -70,6 +74,10 @@ export default function HomeScreen ({navigation} : {navigation : NativeStackNavi
            
 
             <ScrollView style = {{}}>
+                    <PopularSection categoryId={selectedCategory?.id} navigation = {navigation}/>
+                    <RecommendedSection categoryId={selectedCategory?.id} navigation = {navigation}/>
+                    <NewEventSection categoryId={selectedCategory?.id} navigation = {navigation}/>
+                    <DailySection categoryId={selectedCategory?.id} navigation={navigation}/>
                     <Image style={{width:'100%', height:200}} source={require('../assets/images/banner.png')}/>
             </ScrollView>
             
