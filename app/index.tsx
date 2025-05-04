@@ -12,6 +12,7 @@ import NotificationsScreen from '@/screens/NotificationsScreen'
 import PersonalInformationScreen from '@/screens/PersonalInformationScreen'
 import VoucherScreen from '@/screens/VoucherScreen'
 import AddNewCollectionScreen from '@/screens/AddNewCollectionScreen'
+import DetailScreen from '@/screens/HomeScreen/DetailScreen'
 (Text as any).defaultProps = (Text as any).defaultProps || {};
 (Text as any).defaultProps.style = { fontFamily: 'UTMTimesBold'};
 
@@ -82,6 +83,12 @@ export default function App() {
                 options={{
                 headerShown: false
                 }}/>
+                <Stack.Screen
+                  name='detail-screen'
+                  component={DetailScreen}
+                  options={{
+                    headerShown: false
+                  }} />
 
             </Stack.Navigator>
         </UserProvider>
