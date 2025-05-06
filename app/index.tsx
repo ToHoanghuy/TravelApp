@@ -17,6 +17,7 @@ import DetailScreen from '@/screens/HomeScreen/DetailScreen'
 (Text as any).defaultProps.style = { fontFamily: 'UTMTimesBold'};
 
 import React from 'react'
+import AvailableRoomScreen from '@/screens/AvailableRoomScreen'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -89,6 +90,12 @@ export default function App() {
                   options={{
                     headerShown: false
                   }} />
+                  <Stack.Screen
+            name="available-room-screen"
+            component={AvailableRoomScreen}
+            options={{
+              headerShown: false
+            }} />
 
             </Stack.Navigator>
         </UserProvider>

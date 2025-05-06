@@ -14,5 +14,6 @@
     'voucher-screen': undefined;
     'add-new-collection-screen': undefined;
     'detail-screen': undefined;
+    'available-room-screen': undefined;
   };
   
