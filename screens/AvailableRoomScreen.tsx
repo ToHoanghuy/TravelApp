@@ -4,6 +4,9 @@ import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView,
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import {iconMapping} from '../constants/icon';
 import { RootStackParamList } from '@/types/navigation';
+import axios from 'axios';
+import { FontAwesome } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import ServiceOption2 from '@/components/DetailScreen/ServiceOption2';
 
 const { width } = Dimensions.get('window');
@@ -35,26 +38,38 @@ interface Room {
 }
 
 export default function AvailableRoomScreen({ navigation }: {navigation: NativeStackNavigatorProps}) {
+    const route = useRoute<RouteProp<RootStackParamList, 'available-room-screen'>>();
     const [date1, setDate1] = useState(new Date());
     const [date2, setDate2] = useState(new Date());
-
+    
+    const [selectedDate1, setSelectedDate1] = useState('');
+    const [selectedDate2, setSelectedDate2] = useState('');
+    const [showPicker1, setShowPicker1] = useState(false);
+    const [showPicker2, setShowPicker2] = useState(false);    
     const [rooms, setRooms] = useState<Room[]>([]);
+    const [services, setServices] = useState([]);
     const [isModalVisible, setModalVisible] = useState(false);
     const [isModalServiceVisible, setModalServiceVisible] = useState(false);
     const [selectedServices, setSelectedServices] = useState<any>([]);
 
+    const [roomCount, setRoomCount] = useState(0);
+    const [selectedRooms, setSelectedRooms] = useState(0);
     const [selectedRoomCounts, setSelectedRoomCounts] = useState<Record<string, number>>({});
     const [selectedServiceCounts, setSelectedServiceCounts] = useState(0);
     const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
     const [buttonText, setButtonText] = useState("Chọn");
     const [currentIndex, setCurrentIndex] = useState(0);
 
-
+    const showDatePicker1 = () => {
+        setShowPicker1(true);
+    };
   
-
+      const showDatePicker2 = () => {
+        setShowPicker2(true);
+    };
 
     const onDateChange1 = (_: any, selected: Date | undefined) => {
-     
+      setShowPicker1(false);
       if (selected) {
         if (selected > date2) {
           Alert.alert("Lỗi", "Ngày checkin phải nhỏ hơn hoặc bằng ngày checkout.");
@@ -68,7 +83,7 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
     };
 
     const onDateChange2 = (_: any, selected: Date | undefined) => {
-      
+      setShowPicker2(false);
       if (selected) {
         // Kiểm tra nếu ngày checkout nhỏ hơn ngày checkin
         if (selected < date1) {
@@ -76,6 +91,7 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
         } else {
           setDate2(selected);
           const formattedDate = selected.toLocaleDateString('vi-VN');
+          setSelectedDate2(formattedDate);
         }
       }
     };    
@@ -193,6 +209,7 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
         navigation.navigate('reservation-required-screen', {
           selectedRoomsData,
           selectedServicesData: selectedServicesData,
+          
         });
     };
 
