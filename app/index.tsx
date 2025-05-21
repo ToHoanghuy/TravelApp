@@ -17,6 +17,10 @@ import DetailScreen from '@/screens/HomeScreen/DetailScreen'
 (Text as any).defaultProps.style = { fontFamily: 'UTMTimesBold'};
 
 import React from 'react'
+import AvailableRoomScreen from '@/screens/AvailableRoomScreen'
+import ChatScreen from '@/screens/ChatScreen'
+import ChatBoardScreen from '@/screens/ChatBoardScreen'
+import LuckyWheelScreen from '@/screens/LuckyWheelScreen'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -89,6 +93,33 @@ export default function App() {
                   options={{
                     headerShown: false
                   }} />
+                  <Stack.Screen
+            name="available-room-screen"
+            component={AvailableRoomScreen}
+            options={{
+              headerShown: false
+            }} />
+
+            <Stack.Screen
+            name="chat-board-screen"
+            component={ChatBoardScreen}
+            options={{
+              headerShown: false
+            }} />
+            
+          <Stack.Screen
+            name="chat-screen"
+            component={ChatScreen}
+            options={{
+              headerShown: false
+            }} />
+
+                      <Stack.Screen
+            name='lucky-wheel-screen'
+            component={LuckyWheelScreen}
+            options={{
+              headerShown: false
+            }} />
 
             </Stack.Navigator>
         </UserProvider>
