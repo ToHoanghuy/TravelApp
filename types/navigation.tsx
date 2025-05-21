@@ -18,5 +18,7 @@
         'chat-screen': undefined;
     'chat-board-screen': undefined;
     'lucky-wheel-screen': undefined;
+        'search-location-screen': undefined;
+
   };
   

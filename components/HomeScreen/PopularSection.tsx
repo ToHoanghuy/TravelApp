@@ -151,9 +151,12 @@ export default function PopularSection({ categoryId, navigation }: PopularSectio
     <View style={{ height: CARD_HEIGHT + 70 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 10 }}>
         <Text style={styles.titleText}>Danh mục</Text>
+
         <TouchableOpacity onPress={() => navigation.navigate('search-location-screen')} style={{ marginRight: 20, top: 10 }}>
           <Text style={{ fontSize: 14, color: '#196EEE' }}>Xem tất cả</Text>
         </TouchableOpacity>
+
+        
 
       </View>
       <Animated.FlatList
