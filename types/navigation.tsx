@@ -17,5 +17,6 @@
     'available-room-screen': undefined;
         'chat-screen': undefined;
     'chat-board-screen': undefined;
+    'lucky-wheel-screen': undefined;
   };
   

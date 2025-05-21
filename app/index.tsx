@@ -20,6 +20,7 @@ import React from 'react'
 import AvailableRoomScreen from '@/screens/AvailableRoomScreen'
 import ChatScreen from '@/screens/ChatScreen'
 import ChatBoardScreen from '@/screens/ChatBoardScreen'
+import LuckyWheelScreen from '@/screens/LuckyWheelScreen'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -109,6 +110,13 @@ export default function App() {
           <Stack.Screen
             name="chat-screen"
             component={ChatScreen}
+            options={{
+              headerShown: false
+            }} />
+
+                      <Stack.Screen
+            name='lucky-wheel-screen'
+            component={LuckyWheelScreen}
             options={{
               headerShown: false
             }} />
