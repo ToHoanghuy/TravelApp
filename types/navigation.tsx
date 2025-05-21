@@ -15,5 +15,7 @@
     'add-new-collection-screen': undefined;
     'detail-screen': undefined;
     'available-room-screen': undefined;
+        'chat-screen': undefined;
+    'chat-board-screen': undefined;
   };
   

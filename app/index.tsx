@@ -18,6 +18,8 @@ import DetailScreen from '@/screens/HomeScreen/DetailScreen'
 
 import React from 'react'
 import AvailableRoomScreen from '@/screens/AvailableRoomScreen'
+import ChatScreen from '@/screens/ChatScreen'
+import ChatBoardScreen from '@/screens/ChatBoardScreen'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -93,6 +95,20 @@ export default function App() {
                   <Stack.Screen
             name="available-room-screen"
             component={AvailableRoomScreen}
+            options={{
+              headerShown: false
+            }} />
+
+            <Stack.Screen
+            name="chat-board-screen"
+            component={ChatBoardScreen}
+            options={{
+              headerShown: false
+            }} />
+            
+          <Stack.Screen
+            name="chat-screen"
+            component={ChatScreen}
             options={{
               headerShown: false
             }} />
