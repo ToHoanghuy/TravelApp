@@ -3,11 +3,21 @@ import React,{ useState, useEffect } from 'react'
 import {Button, Text, View,  StyleSheet, Image, TouchableOpacity, TextInput,Modal, Dimensions, FlatList} from 'react-native';
 import { NativeStackNavigationProp, NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import { useUser } from '@/context/UserContext';
+import {API_BASE_URL} from '../constants/config';
 import Ticket from '@/components/BookingScreen/Booking';
+import { handleUrlParams } from 'expo-router/build/fork/getStateFromPath-forks';
 import CollectionItem from '@/components/CollectionScreen/Location';
 import LoadingScreen from '@/components/Loading/LoadingScreen';
 
+import image1 from '../assets/collectionavts/image1.png';
+import image2 from '../assets/collectionavts/Collecting-pana.png'
+import image3 from '../assets/collectionavts/Collecting-rafiki.png'
+import image4 from '../assets/collectionavts/Collection-amico.png'
+import image5 from '../assets/collectionavts/Collection-pana.png'
+import image6 from '../assets/collectionavts/Online connection-pana.png'
+import image7 from '../assets/collectionavts/Trip-bro.png'
 
+const images = [image1, image2, image3, image4, image5, image6, image7];
 
 const { height } = Dimensions.get('window');
 
@@ -26,6 +36,7 @@ type CollectionScreenNavigationProp = NativeStackNavigationProp<
 
 export default function CollectionScreen ()
 {
+    const { userId } = useUser();
     const navigation = useNavigation<CollectionScreenNavigationProp>();
     const [modalVisible, setModalVisible] = useState(false);
     const [modalVisible2, setModalVisible2] = useState(false);
@@ -50,9 +61,68 @@ export default function CollectionScreen ()
       useEffect(() => {
         fetchCollections();
       }, [reloadTrigger]);
+      
 
+      const getRandomImage = () => {
+        const randomIndex = Math.floor(Math.random() * images.length);
+        return images[randomIndex];
+      };
+
+      const addNewCollection = async () => {
+        try {
+          const newCollection = {
+            name: "Collection mới",
+            imageUrl: "", 
+          };
+      
+          const response = await fetch(`${API_BASE_URL}/collection/create`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newCollection),
+          });
+      
+          const result = await response.json();
+      
+          if (result.isSuccess) {
+            // Thêm collection vừa tạo vào danh sách
+            setCollections((prevCollections) => [...prevCollections, result.data]);
+            setReloadTrigger(prev => !prev);
+          } else {
+            console.error("Error adding new collection:", result.error);
+          }
+        } catch (error) {
+          console.error("Error adding new collection:", error);
+        }
+      };
 
       const fetchCollections = async () => {
+        try {
+          console.log(userId);
+          const response = await fetch(`${API_BASE_URL}/collection/getbyuserid/${userId}`); 
+          const result = await response.json();
+    
+          if (result.isSuccess) {
+            //setCollections(result.data);
+            const updatedCollections = result.data.map((collection: any) => {
+              const firstLocation = collection.item?.[0];
+              const previewImageUrl = firstLocation?.image?.[0]?.url || null;
+              return {
+                ...collection,
+                previewImageUrl,
+              };
+            });
+            console.log('updatedCollections: ', updatedCollections);
+            setCollections(updatedCollections);
+          } else {
+            //console.error('Error fetching collections:', result.error);
+          }
+        } catch (error) {
+          console.error('Error fetching collections:', error);
+        } finally {
+          setLoading(false); // Dữ liệu đã được tải, cập nhật trạng thái loading
+        }
       }
 
       useEffect(() => {
@@ -60,7 +130,19 @@ export default function CollectionScreen ()
       }, []);
 
       const handleCollectionClick = async (collectionId: string) => {
-
+        try {
+          const response = await fetch(`${API_BASE_URL}/collection/getbyid/${collectionId}`);
+          const result = await response.json();
+          if (result.isSuccess) {
+            setSelectedCollectionLocations(result.data.item); 
+            console.log('rs: ', result.data);
+            setModalVisible2(true); 
+          } else {
+            console.error("Error fetching locations for collection:", result.error);
+          }
+        } catch (error) {
+          console.error("Error fetching locations for collection:", error);
+        }
       };
 
       if (loading) {
@@ -69,6 +151,7 @@ export default function CollectionScreen ()
 
     return (
         <View style = {styles.container}>
+            {/* <Image source={require('../assets/icons/logo.png')} style={styles.logo} /> */}
             <View style = {{alignItems:'center', width:'100%'}}>
                 <View style={styles.search}>
                     <TouchableOpacity onPress={() => console.log('Search icon pressed')}>

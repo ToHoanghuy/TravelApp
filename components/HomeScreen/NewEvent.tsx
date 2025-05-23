@@ -12,6 +12,12 @@ import {
   Image,
 } from 'react-native';
 
+import locationData from '@/constants/location';
+import CustomModal from '../CollectionScreen/AddIntoCollection';
+import * as Network from 'expo-network';
+// import { NetworkInfo } from 'react-native-network-info';
+import { API_BASE_URL } from '../../constants/config';
+// import LuckyWheelScreen from '@/screen/LuckyWheelScreen';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width - 30;

@@ -1,6 +1,4 @@
-
-
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Text,
   View,
@@ -12,9 +10,10 @@ import {
   Image,
 } from 'react-native';
 
+import locationData from '@/constants/location';
 import CustomModal from '../CollectionScreen/AddIntoCollection';
-
-
+import * as Network from 'expo-network';
+import { API_BASE_URL } from '../../constants/config';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = 245;
@@ -40,6 +39,7 @@ export default function PopularSection({ categoryId, navigation }: PopularSectio
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [onEndReachedCalledDuringMomentum, setOnEndReachedCalledDuringMomentum] = useState(false);
 
   const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -64,13 +64,72 @@ export default function PopularSection({ categoryId, navigation }: PopularSectio
 
   const fetchPopularLocations = async (id: string, pageNumber: number) => {
     if (isFetchingMore || !hasMore) return;
-
+  
+    setIsFetchingMore(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/locationbycategory/${id}?page=${pageNumber}&limit=10`);
+      const data = await response.json();
+  
+      if (data.isSuccess) {
+        if (pageNumber === 1) {
+          setLocations(data.data.data);
+        } else {
+          setLocations(prev => [...prev, ...data.data.data]);
+        }
+  
+        setHasMore(data.data.data.length > 0);
+        setPage(pageNumber + 1);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsFetchingMore(false);
+      setLoading(false);
+    }
   };
 
   const getAllLocations = async (pageNumber: number) => {
-
+    try {
+      if (isFetchingMore || !hasMore) return;
+  
+      setIsFetchingMore(true);
+  
+      const response = await fetch(`${API_BASE_URL}/alllocation?page=${pageNumber}&limit=10`);
+      const data = await response.json();
+  
+      if (data.isSuccess) {
+        if (pageNumber === 1) {
+          setLocations(data.data.data);
+          console.log('all location: ', data.data);
+        } else {
+          setLocations(prev => [...prev, ...data.data.data]);
+        }
+  
+        setHasMore(data.data.data.length > 0);
+        setPage(pageNumber + 1); 
+      } else {
+        console.error(data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsFetchingMore(false);
+      setLoading(false);
+    }
   };
 
+  const loadMoreData = useCallback(() => {
+    if (!onEndReachedCalledDuringMomentum && !isFetchingMore && hasMore) {
+      if (categoryId === 'all') {
+        getAllLocations(page);
+      } else if (categoryId) {
+        fetchPopularLocations(categoryId, page);
+      }
+      setOnEndReachedCalledDuringMomentum(true);
+    }
+  }, [categoryId, page, isFetchingMore, hasMore, onEndReachedCalledDuringMomentum]);
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     const inputRange = [
@@ -153,7 +212,7 @@ export default function PopularSection({ categoryId, navigation }: PopularSectio
         <Text style={styles.titleText}>Danh mục</Text>
         <TouchableOpacity onPress={() => navigation.navigate('search-location-screen')} style={{ marginRight: 20, top: 10 }}>
           <Text style={{ fontSize: 14, color: '#196EEE' }}>Xem tất cả</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> 
 
       </View>
       <Animated.FlatList
@@ -169,14 +228,12 @@ export default function PopularSection({ categoryId, navigation }: PopularSectio
         scrollEventThrottle={16}
         keyExtractor={(item, index) => item._id}
         renderItem={renderItem}
-        onEndReached={() => {
-          if (categoryId === 'all') {
-            getAllLocations(page);
-          } else {
-            fetchPopularLocations(categoryId!, page);
-          }
-        }}
-        onEndReachedThreshold={0.5}
+        onEndReached={loadMoreData}
+        onMomentumScrollBegin={() => setOnEndReachedCalledDuringMomentum(false)}
+        onEndReachedThreshold={0.2}
+        maxToRenderPerBatch={5}
+        windowSize={10}
+        removeClippedSubviews={true}
       />
       {isFetchingMore && (
   <Text style={{ textAlign: 'center', marginTop: 10 }}>Đang tải thêm...</Text>
