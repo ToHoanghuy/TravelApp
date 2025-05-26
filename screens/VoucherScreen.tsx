@@ -70,7 +70,37 @@ export default function VoucherScreen() {
 
   // Hàm lấy tất cả voucher
   const fetchVouchers = async () => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`${API_BASE_URL}/voucher/getall`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
 
+      if (!response.ok) {
+        throw new Error('Không thể tải voucher');
+      }
+
+      const responseData = await response.json();
+      
+      if (responseData.isSuccess) {
+        const voucherData = responseData.data || [];
+        setVouchers(voucherData);
+        setFilteredVouchers(voucherData);
+      } else {
+        console.error('Lỗi khi tải voucher:', responseData.message || responseData.error);
+      }
+    } catch (error) {
+      console.error('Lỗi khi gọi API:', error);
+      Alert.alert('Lỗi', 'Không thể tải danh sách voucher. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   // Hàm tìm kiếm và filter voucher
