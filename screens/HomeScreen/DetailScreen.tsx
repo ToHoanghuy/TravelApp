@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, ScrollView, Linking, TextInput, Alert, SafeAreaView, StatusBar, FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-
+import Facility from '@/components/HomeScreen/Facility';
+import axios from 'axios';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRoute,RouteProp } from '@react-navigation/native';
-
+import { useRoute, RouteProp } from '@react-navigation/native';
+import { API_BASE_URL } from '../../constants/config';
 import { Icon } from 'react-native-paper';
-import {iconMapping} from '../../constants/icon';
+import { iconMapping } from '../../constants/icon';
 import CustomModal from '@/components/CollectionScreen/AddIntoCollection';
 import ImageCarousel from '@/components/HomeScreen/ImageCarousel';
 import Recommendation from '@/components/DetailScreen/Recommendation';
 import ServiceOption from '@/components/DetailScreen/ServiceOption';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import { trackEvents } from '../../constants/recommendation';
+import { useUser } from '../../context/UserContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,7 +35,9 @@ type DetailScreenRouteProp = RouteProp<RootStackParamList, 'detail-screen'>;
 
 export default function DetailScreen({navigation} : {navigation : NativeStackNavigatorProps}) {
   const route = useRoute<DetailScreenRouteProp>();
-  const { id } = route.params; 
+  const { id } = route.params;
+  const { userId } = useUser();
+  
   interface Service {
     _id: string;
     id: string;
@@ -140,16 +144,21 @@ const facilityIcons: FacilityIcons = {
     const toggleLike = () => {
         
 
-    };
-
-    const handlePress = (id: string) => {
-      setIsLiked(!isLiked);
+    };    const handlePress = (id: string) => {
+      const newLikedState = !isLiked;
+      setIsLiked(newLikedState);
       setLikedItems((prevState) => ({
         ...prevState,
-        [id]: !prevState[id],
+        [id]: newLikedState,
       }));
       setSelectedLocationId(id);
       setModalVisible(true); 
+      
+      // Track favorite event to recommendation system
+      if (userId) {
+        trackEvents.favorite(userId, id, newLikedState);
+        console.log(`Tracked favorite event for user: ${userId}, location: ${id}, state: ${newLikedState ? 'liked' : 'unliked'}`);
+      }
     };
 
     const toggleExpanded = () => {
@@ -185,6 +194,15 @@ const facilityIcons: FacilityIcons = {
     useEffect(() => {
         getCoordinatesFromAddress(ADDRESS);
     }, []);
+    
+    // Track view event when the component loads
+    useEffect(() => {
+        if (userId && id) {
+            // Log view event to recommendation system
+            trackEvents.view(userId, id, { source: 'detail_screen' });
+            console.log(`Tracked view event for user: ${userId}, location: ${id}`);
+        }
+    }, [userId, id]);
 
     useEffect(() => {
       console.log(locationDetails?.address)
@@ -228,23 +246,134 @@ const storeLocationDetails = async (data: any) => {
 };
 
     const fetchLocationDetails = async (id: string) => {
-
+      try {
+        const response = await fetch(`${API_BASE_URL}/locationbyid/${id}`);
+        const data = await response.json();
+        if (data.isSuccess) {
+          console.log('Location details:', data.data);
+          setLocationDetails(data.data);
+          await storeLocationDetails(data.data);
+        } else {
+          console.error('API error:', data.error);
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+      }
     };
 
     const fetchRoomServices = async (locationId: string) => {
+      try {
+        console.log('locationid: ',locationId);
+        const response = await fetch(`${API_BASE_URL}/room/getbylocationid/${locationId}`);
+        const result = await response.json();
+    
+        if (result.isSuccess && result.data) {
+          
+          // Lấy danh sách dịch vụ từ tất cả các phòng
+          console.log('room',result.data);
+          const allServices = result.data.flatMap((room: any) => room.facility || []);
+          console.log('service: ',allServices);
+          const uniqueServices = Array.from(new Set(allServices.map((service: any) => service.id)))
+                                  .map((id) => {
+                                    return allServices.find((service: any) => service.id === id); // Lấy thông tin dịch vụ
+                                  }); // Loại bỏ dịch vụ trùng lặp
+          setServices(uniqueServices);
+        } else {
+          //console.error('Error fetching room services:', result.error);
+        }
 
+        const allPrices = result.data?.map((room:any) => room.pricePerNight);
+        const minPrice =Math.min(...allPrices);
+        setMinPrice(minPrice);
+
+        if (result.isSuccess && Array.isArray(result.data)){
+          const availableRooms = result.data?.filter((room: any) => room?.quantity > 0);
+        
+          if (availableRooms.length > 0){
+            setRoomsStatus('Còn phòng');
+          } else {
+            setRoomsStatus('Hết phòng');
+          }
+        } else {
+          setRoomsStatus('Hết phòng');
+        }
+
+
+
+      } catch (error) {
+        // console.error('Error fetching room services:', error);
+      }
     };
 
     useEffect(() => {
       const fetchReviews = async () => {
+        setLoadingReviews(true);
+        try {
+          const response = await fetch(`${API_BASE_URL}/review/location/${id}`);
+          const result = await response.json();
+    
+          if (response.ok && result.isSuccess) {
+            setReviewCount(result.data.length);
+            setReviews(result.data);
+            const userPromises = result.data.map(async (review: any) => {
+              const userResponse = await fetch(`${API_BASE_URL}/user/getbyid/${review.senderId}`);
+              const userResult = await userResponse.json();
+              return { senderId: review.senderId, name: userResult.data?.userName || 'Ẩn danh' };
+            });
+
+            const userNamesArray = await Promise.all(userPromises);
+            const userNamesMap = userNamesArray.reduce((acc, user) => {
+              acc[user.senderId] = user.name;
+              return acc;
+            }, {});
+            setUserNames(userNamesMap);
+          } else {
+            // Alert.alert('Lỗi', result.message || 'Không thể lấy phản hồi.');
+          }
+        } catch (error) {
+          console.error('Error fetching reviews:', error);
+          Alert.alert('Lỗi', 'Không thể kết nối với máy chủ.');
+        } finally {
+          setLoadingReviews(false);
+        }
       };
     
       fetchReviews();
     }, [id]);
 
     const fetchservices = async (id : any) => {
-
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/service/location/${id}`);
+        const result = await response.json();
+        if (response.ok && result.isSuccess) {
+          
+          setServicesOfLocation(result.data);
+        } else {
+        }
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        Alert.alert('Lỗi', 'Không thể kết nối với máy chủ.');
+      } 
     };
+
+    const renderImage = ({ item }: { item: { _id: string; url: string } }) => (
+      console.log('image:', item.url),
+      <Image
+        
+        source={{ uri: item.url }}
+        style={styles.image}
+      />
+    )
+
+    const servicesoption = [
+      { icon: 'bicycle', text: 'Thuê xe đạp giá rẻ' },
+      { icon: 'car', text: 'Xe đưa rước tận nơi' },
+      { icon: 'tshirt', text: 'Dịch vụ giặt là giá rẻ' },
+      { icon: 'camera', text: 'Thuê máy ảnh giá rẻ' },
+      // ... thêm các dịch vụ cần thiết
+    ];
+  
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f0f4f8' }}>
       <View style={styles.container}>
@@ -362,11 +491,20 @@ const storeLocationDetails = async (data: any) => {
                 keyboardType="numeric"
               />
               <FontAwesome name="chevron-down" size={20} color="gray" style={styles.iconRight} />
-            </View>
-
-            <TouchableOpacity onPress={()=> {
+            </View>            <TouchableOpacity onPress={()=> {
               console.log('Navigating with ID: ', locationDetails._id);
               console.log('servicesOfLocation:', servicesOfLocation);
+              
+              // Track the search/click event to recommendation system
+              if (userId && locationDetails._id) {
+                trackEvents.click(userId, locationDetails._id, { 
+                  action: 'search_rooms',
+                  checkin_date: date1?.toISOString(),
+                  checkout_date: date2?.toISOString()
+                });
+                console.log(`Tracked search/click event for user: ${userId}, location: ${locationDetails._id}`);
+              }
+              
               navigation.navigate('available-room-screen', {
                 id: locationDetails._id,
                 checkinDate: date1, // Gửi ngày checkin
