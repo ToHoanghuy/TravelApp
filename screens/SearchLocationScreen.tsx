@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert, Platform, FlatList, ActivityIndicator } from 'react-native';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import FilterButton from '@/components/LocationScreen/FilterButton';
+import { API_BASE_URL } from '../constants/config';
 
 export default function SearchLocationScreen({ navigation }: { navigation: NativeStackNavigatorProps }) {
     const [filterData, setFilterData] = useState([]);
@@ -23,13 +24,59 @@ export default function SearchLocationScreen({ navigation }: { navigation: Nativ
     
 
     const fetchAllLocations = async (pageNumber = 1, isLoadMore = false) => {
-
+        try {
+            if (isLoadMore && (isFetchingMore || !hasMore)) return;
+            setIsFetchingMore(true);
+    
+            const response = await fetch(`${API_BASE_URL}/alllocation?page=${pageNumber}&limit=10`);
+            const data = await response.json();
+    
+            if (data.isSuccess) {
+                const newLocations = data.data.data;
+                setLocationList(prev => {
+                    const existingIds = new Set(prev.map(item => item._id));
+                    const uniqueNewLocations = newLocations.filter((item: { _id: any; }) => !existingIds.has(item._id));
+                    return isLoadMore ? [...prev, ...uniqueNewLocations] : newLocations;
+                });
+    
+                setHasMore(newLocations.length > 0);
+                setPage(prev => prev + 1);
+            } else {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải thêm all location:', error);
+        } finally {
+            setIsFetchingMore(false);
+        }
     };
     
     
 
     const fetchFilteredLocations = async (filters: any) => {
-
+        try {
+            const hasFilter = Object.values(filters).some(value => value); // kiểm tra có ít nhất 1 filter không
+            if (!hasFilter) {
+                fetchAllLocations(); // không có filter thì load all
+                return;
+            }
+    
+            const query = new URLSearchParams(filters).toString();
+            const response = await fetch(`${API_BASE_URL}/search?${query}`);
+            const data = await response.json();
+    
+            if (Array.isArray(data) && data.length > 0) {
+                setLocationList(data);
+                setHasMore(false);
+                console.log('Filtered locations:', data);
+            } else {
+                setLocationList([]);
+                Alert.alert('Không tìm thấy địa điểm phù hợp.');
+            }
+        } catch (error) {
+            console.error("Lỗi khi gọi API bộ lọc:", error);
+            Alert.alert('Lỗi', 'Không thể tải dữ liệu');
+        }
     };
 
     useEffect(() => {

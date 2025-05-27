@@ -1,5 +1,15 @@
 // types/navigation.ts
-
+export type SelectedRoom = {
+    roomId: string;
+    count: number;
+    roomDetails: {
+      name: string;
+      price: number;
+      checkinDate: Date;
+      checkoutDate: Date;
+    };
+    nights: number;
+  };
 
 export type RootStackParamList = {
   'welcome1': undefined;
@@ -20,6 +30,7 @@ export type RootStackParamList = {
   'lucky-wheel-screen': undefined;
   'search-location-screen': undefined;
   'view-map-screen': undefined;
+  'reservation-required-screen': { selectedRoomsData: SelectedRoom[], selectedServicesData: any,locationId: string};
 
 
 };
