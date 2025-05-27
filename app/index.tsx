@@ -23,6 +23,7 @@ import ChatBoardScreen from '@/screens/ChatBoardScreen'
 import LuckyWheelScreen from '@/screens/LuckyWheelScreen'
 import SearchLocationScreen from '@/screens/SearchLocationScreen'
 import ViewMapScreen from '@/screens/ViewMapScreen'
+import ReservationRequiredScreen from '@/screens/ReservationRequiredScreen'
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -133,6 +134,12 @@ export default function App() {
           <Stack.Screen
             name='view-map-screen'
             component={ViewMapScreen}
+            options={{
+              headerShown: false
+            }} />
+            <Stack.Screen
+            name='reservation-required-screen'
+            component={ReservationRequiredScreen}
             options={{
               headerShown: false
             }} />
