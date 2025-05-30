@@ -9,7 +9,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { CONTAINER_HEIGHT } from "../components/home/head/Stories";
+import Stories, { CONTAINER_HEIGHT } from "../components/home/head/Stories";
+import HeaderSvg from "../components/home/head/HeaderSVG";
+import StorySvg from "../components/home/head/StorySVG";
+import Header from "../components/home/head/Header";
 
 export default function SocialScreen({ navigation }: {navigation: NativeStackNavigatorProps}) {
   const [followings, setFollowings] = React.useState({ data: [], list: [] });
@@ -40,18 +43,39 @@ export default function SocialScreen({ navigation }: {navigation: NativeStackNav
   return (
     <View style={styles.container}>
       <View>
-        <View
-          onLayout={(event) => {
-            setHeaderHeight(event.nativeEvent.layout.height);
-          }}
-        >
+        <Animated.View style={storySvgAnimatedStyles}>
+          <StorySvg
+            headerHeight={headerHeight}
+            storyHeight={CONTAINER_HEIGHT}
+            size={80}
+            paddingTop={20}
+            visible_items={5}
+            animatedStyle={storyAnimatedStyles}
+          />
+        </Animated.View>
+
+        <View>
+          <HeaderSvg
+            headerHeight={headerHeight}
+            storyHeight={CONTAINER_HEIGHT}
+            size={80}
+            paddingTop={20}
+            visible_items={5}
+            animatedStyle={storyAnimatedStyles}
+          />
+          <View
+            onLayout={(event) => {
+              setHeaderHeight(event.nativeEvent.layout.height);
+            }}
+          >
+            <Header navigation={navigation} />
+          </View>
         </View>
+
+        <Animated.View style={storyAnimatedStyles}>
+          <Stories followingsData={followings.data} />
+        </Animated.View>
       </View>
-      <Animated.View style={storyAnimatedStyles}>
-        <Body StoryTranslate={{ value: false }} />
-      </Animated.View>
-      <Animated.View style={storySvgAnimatedStyles}>
-      </Animated.View>
       <FloatingButton navigation={navigation} />
     </View>
   );
