@@ -25,6 +25,7 @@ import SearchLocationScreen from '@/screens/SearchLocationScreen'
 import ViewMapScreen from '@/screens/ViewMapScreen'
 import ReservationRequiredScreen from '@/screens/ReservationRequiredScreen'
 import SocialScreen from '@/screens/SocialScreen';
+import ProfileSocialScreen from '@/screens/ProfileSocialScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -141,6 +142,12 @@ export default function App() {
             <Stack.Screen
             name='reservation-required-screen'
             component={ReservationRequiredScreen}
+            options={{
+              headerShown: false
+            }} />
+            <Stack.Screen
+            name='profile-social-screen'
+            component={ProfileSocialScreen}
             options={{
               headerShown: false
             }} />
