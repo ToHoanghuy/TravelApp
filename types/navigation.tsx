@@ -31,6 +31,7 @@ export type RootStackParamList = {
   'search-location-screen': undefined;
   'view-map-screen': undefined;
   'profile-social-screen': undefined;
+  'notifications-social-screen': undefined;
   'reservation-required-screen': { selectedRoomsData: SelectedRoom[], selectedServicesData: any,locationId: string};
 
 
