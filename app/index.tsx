@@ -24,6 +24,9 @@ import LuckyWheelScreen from '@/screens/LuckyWheelScreen'
 import SearchLocationScreen from '@/screens/SearchLocationScreen'
 import ViewMapScreen from '@/screens/ViewMapScreen'
 import ReservationRequiredScreen from '@/screens/ReservationRequiredScreen'
+import ProfileSocialScreen from '@/screens/ProfileSocialScreen';
+import NotificationsSocialScreen from '@/screens/NotificationsSocialScreen';
+
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
 
@@ -143,6 +146,19 @@ export default function App() {
             options={{
               headerShown: false
             }} />
+            <Stack.Screen
+            name='profile-social-screen'
+            component={ProfileSocialScreen}
+            options={{
+              headerShown: false
+            }} />
+            <Stack.Screen
+            name='notifications-social-screen'
+            component={NotificationsSocialScreen}
+            options={{
+              headerShown: false
+            }} />
+            
 
         </Stack.Navigator>
       </UserProvider>
