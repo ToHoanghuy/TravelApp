@@ -2,12 +2,15 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert, Platform, Modal, FlatList, Dimensions } from 'react-native';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
-import {iconMapping} from '../constants/icon';
+import { iconMapping } from '../constants/icon';
 import { RootStackParamList } from '@/types/navigation';
+import { API_BASE_URL } from '../constants/config';
 import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ServiceOption2 from '@/components/DetailScreen/ServiceOption2';
+import { useUser } from '../context/UserContext';
+import { trackEvents } from '../constants/recommendation';
 
 const { width } = Dimensions.get('window');
 
@@ -39,8 +42,11 @@ interface Room {
 
 export default function AvailableRoomScreen({ navigation }: {navigation: NativeStackNavigatorProps}) {
     const route = useRoute<RouteProp<RootStackParamList, 'available-room-screen'>>();
-    const [date1, setDate1] = useState(new Date());
-    const [date2, setDate2] = useState(new Date());
+    const { id, checkinDate, checkoutDate, serviceOfLocation } = route.params;
+    const { userId } = useUser();
+    console.log('checkin ddate: ', checkinDate, serviceOfLocation);
+    const [date1, setDate1] = useState(checkinDate);
+    const [date2, setDate2] = useState(checkoutDate);
     
     const [selectedDate1, setSelectedDate1] = useState('');
     const [selectedDate2, setSelectedDate2] = useState('');
@@ -114,11 +120,57 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
 
     useEffect(() => {
         const fetchAvailableRooms = async () => {
+          try {
+            const bookingResponse = await fetch(
+              `${API_BASE_URL}/booking/getall`
+            );
+            const bookingData = await bookingResponse.json();
+      
+            if (Array.isArray(bookingData.data)) {
+              const bookings = bookingData.data;
+              console.log(bookings);
 
+              const roomResponse = await fetch(
+                `${API_BASE_URL}/room/getbylocationid/${id}`
+              );
+              const roomData = await roomResponse.json();
+      
+              if (Array.isArray(roomData.data)) {
+                const rooms = roomData.data;
+
+
+                const availableRooms = rooms.filter((room: any) => {
+                  const isBooked = bookings.some((booking: any) => {
+                    const bookingCheckin = new Date(booking.checkInDate).getTime();
+                    const bookingCheckout = new Date(booking.checkOutDate).getTime();
+                    
+                    const userCheckin = new Date(checkinDate).getTime();
+                    const userCheckout = new Date(checkoutDate).getTime();
+                    // console.log('booking checkin: ',bookingCheckin);
+                    // console.log('booking checkout: ',bookingCheckout);
+                    // console.log('user checkin: ',userCheckin);
+                    // console.log('user checkout: ',userCheckout);
+                    
+                    return (
+                      room._id === booking?.items?.roomId && 
+                      ((userCheckin >= bookingCheckin && userCheckin <= bookingCheckout) ||
+                        (userCheckout >= bookingCheckin && userCheckout <= bookingCheckout))  
+                    );
+                  });
+      
+                  return !isBooked; 
+                });
+      
+                setRooms(availableRooms); 
+              }
+            }
+          } catch (error) {
+            console.error('eError fetching rooms or bookings:', error);
+          }
         };
       
         fetchAvailableRooms();
-      }, []);
+      }, [id, checkinDate, checkoutDate]);
 
     const handleApply = () => {
         {selectedRoomCounts[currentRoomId!] ? `Đã chọn ${selectedRoomCounts[currentRoomId!]} phòng` : "Chọn"}
@@ -181,9 +233,7 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
           checkinDate: Date;
           checkoutDate: Date;
         };
-    };
-
-    const handleConfirm = () => {
+    };    const handleConfirm = () => {
         const selectedRoomsData = Object.keys(selectedRoomCounts).map((roomId) => {
             const room = rooms.find((r) => r._id === roomId);
             return {
@@ -205,11 +255,23 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
         }
         const selectedServicesData = selectedServices.filter((service: any) => service.quantity > 0);
 
+        // Track click event for the booking process
+        if (userId && id) {
+          trackEvents.click(userId, id, {
+            action: 'proceed_to_booking',
+            rooms_selected: selectedRoomsData.length,
+            services_selected: selectedServicesData.length,
+            checkin_date: date1.toISOString(),
+            checkout_date: date2.toISOString()
+          });
+          console.log(`Tracked booking click event for user: ${userId}, location: ${id}`);
+        }
+
         console.log('selectedServicesDataaaaa: ', selectedServicesData);
         navigation.navigate('reservation-required-screen', {
           selectedRoomsData,
           selectedServicesData: selectedServicesData,
-          
+          locationId: id,
         });
     };
 
@@ -422,6 +484,7 @@ export default function AvailableRoomScreen({ navigation }: {navigation: NativeS
                         </TouchableOpacity>
                         <Text style={styles.modalTitle}>Chọn dịch vụ kèm theo</Text>
                         <ScrollView>
+                            <ServiceOption2 services={serviceOfLocation} selectedServicess={selectedServices} onChangeSelectedServices={setSelectedServices} />
                         </ScrollView>
                         <TouchableOpacity style={styles.applyButton} onPress={handleApplyService}>
                             <Text style={styles.applyButtonText}>Xác nhận</Text>
