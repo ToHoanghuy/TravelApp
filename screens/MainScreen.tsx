@@ -42,6 +42,20 @@ export default function MainScreen() {
           )
         }}
       />
+              <Tab.Screen 
+        name="Khám phá" 
+        component={ProfileScreen}
+        options={{ 
+          tabBarIcon: ({ focused }: any) => (
+            <Image 
+              source={require('../assets/icons/Profile.png')} 
+              style={{ tintColor: focused ? "blue" : "gray", width: 22, height: 22 }} 
+            />
+          ),
+          headerShown:false,
+
+        }}
+      /> 
         <Tab.Screen 
         name="Yêu thích" 
         component={CollectionScreen}
@@ -57,7 +71,7 @@ export default function MainScreen() {
         }}
       />
         <Tab.Screen 
-        name="trang cá nhân" 
+        name="Trang cá nhân" 
         component={ProfileScreen}
         options={{ 
           tabBarIcon: ({ focused }: any) => (
