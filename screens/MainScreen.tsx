@@ -6,6 +6,7 @@ import TicketScreen from "@/screens/TicketScreen";
 import CollectionScreen from "@/screens/CollectionScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import React from 'react';
+import SocialScreen from './SocialScreen';
 
 const Tab = createBottomTabNavigator()
 
@@ -44,7 +45,7 @@ export default function MainScreen() {
       />
               <Tab.Screen 
         name="Khám phá" 
-        component={ProfileScreen}
+        component={SocialScreen}
         options={{ 
           tabBarIcon: ({ focused }: any) => (
             <Image 
