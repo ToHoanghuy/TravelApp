@@ -26,6 +26,8 @@ import ViewMapScreen from '@/screens/ViewMapScreen'
 import ReservationRequiredScreen from '@/screens/ReservationRequiredScreen'
 import ProfileSocialScreen from '@/screens/ProfileSocialScreen';
 import NotificationsSocialScreen from '@/screens/NotificationsSocialScreen';
+import PaymentMethodScreen from '@/screens/PaymentMethodScreen'
+import AddNewPaymentMethodScreen from '@/screens/AddNewPaymentMethodScreen'
 
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -158,7 +160,20 @@ export default function App() {
             options={{
               headerShown: false
             }} />
-            
+            <Stack.Screen
+            name="payment-method-screen"
+            component={PaymentMethodScreen}
+            options={{
+              headerShown: false
+            }} />
+
+          <Stack.Screen
+            name="add-new-payment-method-screen"
+            component={AddNewPaymentMethodScreen}
+            options={{
+              headerShown: false
+            }} />
+
 
         </Stack.Navigator>
       </UserProvider>

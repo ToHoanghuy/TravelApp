@@ -1,4 +1,5 @@
 // types/navigation.ts
+
 export type SelectedRoom = {
     roomId: string;
     count: number;
@@ -10,29 +11,34 @@ export type SelectedRoom = {
     };
     nights: number;
   };
-
-export type RootStackParamList = {
-  'welcome1': undefined;
-  'login': undefined;
-  'register': undefined;
-  'register2': undefined;
-  'main-screen': undefined;
-  'collection-screen': undefined;
-  'booking-screen': undefined;
-  'notifications-screen': undefined;
-  'personal-information-screen': undefined;
-  'voucher-screen': undefined;
-  'add-new-collection-screen': undefined;
-  'detail-screen': undefined;
-  'available-room-screen': undefined;
-  'chat-screen': undefined;
-  'chat-board-screen': undefined;
-  'lucky-wheel-screen': undefined;
-  'search-location-screen': undefined;
-  'view-map-screen': undefined;
-  'profile-social-screen': undefined;
-  'notifications-social-screen': undefined;
-  'reservation-required-screen': { selectedRoomsData: SelectedRoom[], selectedServicesData: any,locationId: string};
-
-
-};
+  
+  export type RootStackParamList = {
+    'welcome1': undefined;
+    'login': undefined;
+    'register': undefined;
+    'register2': undefined;
+    'collection-screen': undefined;
+    'add-new-collection-screen': undefined;
+    'personal-information-screen': undefined;
+    'notifications-screen': undefined;
+    'chat-board-screen': undefined;
+    'chat-screen': undefined;
+    'main-screen': undefined;
+    'payment-method-screen': {locationId: string, totalPrice: string, selectedRoomsData: SelectedRoom[]};
+    'add-new-payment-method-screen': undefined;
+    'reservation-required-screen': { selectedRoomsData: SelectedRoom[], selectedServicesData: any,locationId: string};
+    'available-room-screen': { id: string; checkinDate: Date; checkoutDate: Date; serviceOfLocation: any };
+    'detail-screen': { id: string };
+    'detail-booking-screen': {bookingId: string; title: string; status: string};
+    'booking-screen': undefined;
+    'lucky-wheel-screen': undefined;
+    'search-location-screen': undefined;
+    'profile-social-screen': undefined;
+    'search-friend-screen': undefined;
+    'notifications-social-screen': undefined;
+    'new-post-screen': undefined;
+    'view-map-screen': undefined;
+    'voucher-screen': undefined;
+    'post-detail-screen': { postId: string };
+    
+  };
