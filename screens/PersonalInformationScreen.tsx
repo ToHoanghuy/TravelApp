@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert, Platform } from 'react-native';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
+import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
+// import DatePicker from 'react-native-date-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useUser } from '@/context/UserContext';
+import {API_BASE_URL} from '../constants/config';
 
 type EditFields = 'name' | 'phoneNumber' | 'email' | 'address' | 'dob' | 'nationality' | 'citizenId';
 
@@ -47,6 +50,110 @@ export default function PersonalInformationScreen({ navigation }: {navigation: N
       setIsEditing((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/getbyid/${userId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setName({ firstName: data.data.userName || 'Người dùng khách', lastName: data.lastName || '' });
+      setPhoneNumber(data.data.userPhoneNumber || 'Chưa được cung cấp');
+      setEmail(data.data.userEmail || '');
+      setAddress(data.userAddress || 'Chưa được cung cấp');
+      setDob(data.userDateOfBirth || 'Chưa được cung cấp');
+      setNationality(data.Nationality || 'Chưa được cung cấp');
+      setCitizenId(data.CitizenId || 'Chưa được cung cấp');
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const updateUserData = async (field: EditFields, value: any) => {
+    try {
+      let updateData = {};
+      
+      // Xác định đúng tên trường cần cập nhật trong cơ sở dữ liệu
+      switch(field) {
+        case 'name':
+          updateData = { userName: value };
+          break;
+        case 'phoneNumber':
+          updateData = { userPhoneNumber: value };
+          break;
+        case 'email':
+          updateData = { userEmail: value };
+          break;
+        case 'address':
+          updateData = { userAddress: value };
+          break;
+        case 'dob':
+          updateData = { userDateOfBirth: value };
+          break;
+        case 'nationality':
+          updateData = { userNationality: value };
+          break;
+        case 'citizenId':
+          updateData = { userCitizenId: value };
+          break;
+      }
+
+      console.log(`Cập nhật trường ${field} với giá trị:`, updateData);
+      
+      const response = await fetch(`${API_BASE_URL}/user/update/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+        credentials: 'include', // Đảm bảo gửi cookies xác thực
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API response error:', errorText);
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log('Cập nhật thành công:', data);
+      
+      // Cập nhật giao diện người dùng
+      switch(field) {
+        case 'name':
+          setName({ firstName: value, lastName: '' });
+          break;
+        case 'phoneNumber':
+          setPhoneNumber(value);
+          break;
+        case 'email':
+          setEmail(value);
+          break;
+        case 'address':
+          setAddress(value);
+          break;
+        case 'dob':
+          setDob(value);
+          break;
+        case 'nationality':
+          setNationality(value);
+          break;
+        case 'citizenId':
+          setCitizenId(value);
+          break;
+      }
+      
+      Alert.alert('Thành công', 'Thông tin đã được cập nhật!');
+    } catch (error) {
+      console.error('Lỗi cập nhật thông tin người dùng:', error);
+      Alert.alert('Lỗi', 'Không thể cập nhật thông tin. Vui lòng thử lại.');
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData(); // Gọi API khi màn hình load
+  }, [userId]);
 
   const handleSave = (field: EditFields) => {
     let value;
@@ -54,21 +161,22 @@ export default function PersonalInformationScreen({ navigation }: {navigation: N
     switch (field) {
       case 'name':
         if (name.firstName.trim() === '' || name.lastName.trim() === '') {
-          Alert.alert('Error', 'Họ và tên không được để trống');
+          Alert.alert('Lỗi', 'Họ và tên không được để trống');
           return;
         }
-        value = `${name.firstName} ${name.lastName}`;
+        // Tên đầy đủ hoặc chỉ tên (tùy theo cấu trúc dữ liệu backend)
+        value = name.lastName ? `${name.firstName} ${name.lastName}` : name.firstName;
         break;
       case 'phoneNumber':
         if (phoneNumber.trim() === '') {
-          Alert.alert('Error', 'Số điện thoại không được để trống');
+          Alert.alert('Lỗi', 'Số điện thoại không được để trống');
           return;
         }
         value = phoneNumber;
         break;
       case 'email':
         if (email.trim() === '') {
-          Alert.alert('Error', 'Email không được để trống');
+          Alert.alert('Lỗi', 'Email không được để trống');
           return;
         }
         value = email;
@@ -95,7 +203,8 @@ export default function PersonalInformationScreen({ navigation }: {navigation: N
       default:
         return;
     }
-    setUserUpdated(true);
+  
+    updateUserData(field, value);
     setIsEditing((prev) => ({ ...prev, [field]: false }));
   };
 

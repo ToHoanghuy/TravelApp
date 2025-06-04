@@ -6,6 +6,7 @@ import TicketScreen from "@/screens/TicketScreen";
 import CollectionScreen from "@/screens/CollectionScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import React from 'react';
+import SocialScreen from './SocialScreen';
 
 const Tab = createBottomTabNavigator()
 
@@ -42,6 +43,20 @@ export default function MainScreen() {
           )
         }}
       />
+              <Tab.Screen 
+        name="Khám phá" 
+        component={SocialScreen}
+        options={{ 
+          tabBarIcon: ({ focused }: any) => (
+            <Image 
+              source={require('../assets/icons/Profile.png')} 
+              style={{ tintColor: focused ? "blue" : "gray", width: 22, height: 22 }} 
+            />
+          ),
+          headerShown:false,
+
+        }}
+      /> 
         <Tab.Screen 
         name="Yêu thích" 
         component={CollectionScreen}
@@ -57,7 +72,7 @@ export default function MainScreen() {
         }}
       />
         <Tab.Screen 
-        name="trang cá nhân" 
+        name="Trang cá nhân" 
         component={ProfileScreen}
         options={{ 
           tabBarIcon: ({ focused }: any) => (
