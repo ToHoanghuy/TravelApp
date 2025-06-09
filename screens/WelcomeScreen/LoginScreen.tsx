@@ -44,20 +44,6 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
         <View style={styles.container}>
             <Text style={styles.textsignup}>Đăng nhập ngay</Text>
             <Text style={styles.text1}>Đăng nhập để sử dụng app của chúng tôi</Text>
-            <Text style={styles.text2}>Đăng nhập với</Text>
-
-            <View style={styles.buttonRow}>
-                <TouchableOpacity
-                    style={styles.circleButtonGoogle}
-                >
-                    <Image source={require('../../assets/icons/icongoogle.png')} style={styles.buttonIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.circleButtonFacebook}
-                >
-                    <Image source={require('../../assets/icons/iconfacebook.png')} style={styles.buttonIcon} />
-                </TouchableOpacity>
-            </View>
             <View style ={styles.backgroundinput}>
                 <TextInput
                     style={styles.input}
