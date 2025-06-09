@@ -86,7 +86,7 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
 
             <View style={styles.checkboxContainer}>
                 <TouchableOpacity onPress={handleCheckBox}>
-                    <Text style={styles.checkboxText}>quên mật khẩu?</Text>
+                    <Text style={styles.checkboxText}>Quên mật khẩu?</Text>
                 </TouchableOpacity>
             </View>
 
