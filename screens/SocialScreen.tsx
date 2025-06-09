@@ -1,32 +1,34 @@
 import * as React from "react";
 import { View, StyleSheet } from "react-native";
-import Body from "../components/home/body/Body";
-import FloatingButton from "../components/home/FloatingButton";
+import Header from "../components/home/head/Header";
+import Stories, { CONTAINER_HEIGHT } from "../components/home/head/Stories";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { GlobalStyles } from "../constants/Styles.js";
-import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
+import Body from "../components/home/body/Body";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import Stories, { CONTAINER_HEIGHT } from "../components/home/head/Stories";
 import HeaderSvg from "../components/home/head/HeaderSVG";
 import StorySvg from "../components/home/head/StorySVG";
-import Header from "../components/home/head/Header";
+import FloatingButton from "../components/home/FloatingButton";
+import { StatusBar } from "react-native";
+import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 
 export default function SocialScreen({ navigation }: {navigation: NativeStackNavigatorProps}) {
   const [followings, setFollowings] = React.useState({ data: [], list: [] });
   const [headerHeight, setHeaderHeight] = React.useState(50);
-
   const StoryTranslate = useSharedValue(false);
 
   const storyAnimatedStyles = useAnimatedStyle(() => {
     return {
-      marginTop: StoryTranslate.value ? withTiming(-CONTAINER_HEIGHT) : withTiming(0),
+      marginTop: StoryTranslate.value
+        ? withTiming(-CONTAINER_HEIGHT)
+        : withTiming(0),
       opacity: StoryTranslate.value ? withTiming(0) : withTiming(1),
     };
   });
-
   const storySvgAnimatedStyles = useAnimatedStyle(() => {
     return {
       position: "absolute",
@@ -39,9 +41,9 @@ export default function SocialScreen({ navigation }: {navigation: NativeStackNav
       ],
     };
   });
-
   return (
     <View style={styles.container}>
+      {/* <StatusBar backgroundColor={GlobalStyles.colors.primary300} /> */}
       <View>
         <Animated.View style={storySvgAnimatedStyles}>
           <StorySvg
@@ -53,7 +55,6 @@ export default function SocialScreen({ navigation }: {navigation: NativeStackNav
             animatedStyle={storyAnimatedStyles}
           />
         </Animated.View>
-
         <View>
           <HeaderSvg
             headerHeight={headerHeight}
@@ -76,10 +77,12 @@ export default function SocialScreen({ navigation }: {navigation: NativeStackNav
           <Stories followingsData={followings.data} />
         </Animated.View>
       </View>
+      <Body StoryTranslate={StoryTranslate} />
       <FloatingButton navigation={navigation} />
     </View>
   );
-}
+};
+
 
 const styles = StyleSheet.create({
   container: {

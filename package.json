@@ -24,6 +24,7 @@
     "@react-navigation/material-top-tabs": "^7.2.13",
     "@react-navigation/native": "^7.0.14",
     "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
     "expo": "~52.0.37",
     "expo-blur": "~14.0.3",
     "expo-checkbox": "~4.0.0",
