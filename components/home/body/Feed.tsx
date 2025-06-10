@@ -35,12 +35,12 @@ const Feed = ({ StoryTranslate, userData } : any) => {
         setPosts(data.data);
         console.log("Friend posts loaded: ", data.data.length);
       } else {
-        console.error('Failed to fetch friend posts:', response.statusText);
+        console.log('Failed to fetch friend posts:', response.statusText);
         // Fallback to user's own posts
         getUserPosts();
       }
     } catch (error) {
-      console.error('Error fetching friend posts:', error);
+      console.log('Error fetching friend posts:', error);
       // Fallback to user's own posts
       getUserPosts();
     } finally {

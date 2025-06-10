@@ -1,4 +1,5 @@
 // CustomModal.tsx
+import { API_BASE_URL } from '@/constants/config';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
@@ -46,11 +47,57 @@ const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose, onSelectCol
     }, [visible]);
 
     const fetchUserCollections = async () => {
-
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/collection/getbyuserid/${userId}`);
+        const data = await response.json();
+        if (data.isSuccess) {
+          // Add previewImageUrl like CollectionScreen
+          const updatedCollections = data.data.map((collection: any) => {
+            const firstLocation = collection.item?.[0];
+            const previewImageUrl = firstLocation?.image?.[0]?.url || null;
+            return {
+              ...collection,
+              previewImageUrl,
+            };
+          });
+          setCollections(updatedCollections);
+        } else {
+          console.error("Error fetching collections:", data.error);
+        }
+      } catch (error) {
+        console.error("Fetch collections error:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     const handleCollectionClick = async (collectionId: string) => {
-
+      try {
+        const response = await fetch(`${API_BASE_URL}/collection/createitem/${collectionId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            locationId: selectedLocationId, // Truyền ID địa điểm đã chọn
+          }),
+        });
+    
+        const data = await response.json();
+    
+        if (data.isSuccess) {
+          Alert.alert("Thành công", "Địa điểm đã được thêm vào bộ sưu tập.");
+        } else {
+          console.error("Lỗi khi thêm vào bộ sưu tập:", data.error);
+          Alert.alert("Thông báo", "Địa điểm đã tồn tại trong bộ sưu tập!");
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+        Alert.alert("Lỗi", "Có lỗi xảy ra trong quá trình thêm địa điểm.");
+      } finally {
+        onClose(); // Đóng modal sau khi thực hiện
+      }
     };
     
     return (
@@ -101,7 +148,11 @@ const CustomModal: React.FC<CustomModalProps> = ({ visible, onClose, onSelectCol
                                   onPress={() => handleCollectionClick(item._id)}
                                 >
                                   <Image
-                                    source={images[index % images.length]}
+                                    source={
+                                      item.previewImageUrl
+                                        ? { uri: item.previewImageUrl }
+                                        : require("../../assets/images/defaultlocation.png")
+                                    }
                                     style={{ width: 150, height: 150, borderRadius: 20 }}
                                   />
                                 </TouchableOpacity>

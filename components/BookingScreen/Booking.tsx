@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/constants/config';
 import { RootStackParamList } from '@/types/navigation';
 import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -22,12 +23,39 @@ const Ticket: React.FC<TicketProps> = ({ title, date, status, onCancel, imageUrl
   const [review, setReview] = useState('');
 
   const handleNavigate = () => {
-    console.log(bookingId)
+    navigation.navigate('detail-booking-screen', {bookingId ,title, status}); 
+    console.log(bookingId)// Truyền bookingId
     console.log(title)
     console.log(status)
   };
 
   const handleSubmitBooking = async () => {
+    try {
+      // Gọi API để gửi đánh giá
+      const response = await fetch(`${API_BASE_URL}/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          locationId,
+          rating,
+          review,
+        }),
+      });
+
+      const result = await response.json();
+      console.log(response.json);
+      if (result.isSuccess) {
+        alert('Đánh giá đã được gửi!');
+        setModalVisible(false); // Đóng modal sau khi gửi thành công
+      } else {
+        alert(result.message || 'Không thể gửi đánh giá.');
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Lỗi khi gửi đánh giá.');
+    }
   };
 
   const handleRateBooking = () =>{
@@ -35,6 +63,7 @@ const Ticket: React.FC<TicketProps> = ({ title, date, status, onCancel, imageUrl
   }
 
   const handleRebook = () => {
+    // navigation.navigate('rebook-screen', { bookingId }); // Điều hướng tới màn hình đặt lại
   };
 
   const handleStarPress = (value:any) => {
@@ -42,6 +71,43 @@ const Ticket: React.FC<TicketProps> = ({ title, date, status, onCancel, imageUrl
   };
 
   const handleCancelBooking = () => {
+    Alert.alert(
+      'Xác nhận hủy',
+      'Bạn có chắc chắn muốn hủy booking này?',
+      [
+        {
+          text: 'Không',
+          style: 'cancel',
+        },
+        {
+          text: 'Có',
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_BASE_URL}/booking/update/${bookingId}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'canceled' }), // Truyền trạng thái mới
+              });
+  
+              const result = await response.json();
+  
+              if (result.isSuccess) {
+                Alert.alert('Thành công', 'Booking đã được hủy.');
+                onCancel(); // Cập nhật danh sách sau khi hủy
+              } else {
+                Alert.alert('Lỗi', result.message || 'Không thể hủy booking.');
+              }
+            } catch (error) {
+              console.error('Error canceling booking:', error);
+              Alert.alert('Lỗi', 'Không thể kết nối với máy chủ.');
+            }
+          },
+        },
+      ],
+      { cancelable: true } // Cho phép hủy bỏ thông báo bằng cách nhấn ra ngoài
+    );
   };
   
 

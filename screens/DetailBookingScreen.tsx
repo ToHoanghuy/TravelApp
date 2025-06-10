@@ -247,7 +247,7 @@ export default function DetailBookingScreen({ navigation }: {navigation: NativeS
                       <View style={{ position: 'absolute', right: 0 }}>
                       <RadioButton
                           value="first"
-                          status={checked === 'first' ? 'checked' : 'unchecked'}
+                          status={checked === 'first' ? 'unchecked' : 'checked'}
                       />
                       </View>
                     </View>
@@ -259,7 +259,7 @@ export default function DetailBookingScreen({ navigation }: {navigation: NativeS
                       <View style={{ position: 'absolute', right: 0 }}>
                       <RadioButton
                           value="second"
-                          status={checked === 'second' ? 'checked' : 'unchecked'}
+                          status={checked === 'second' ? 'unchecked' : 'checked'}
                       />
                       </View>
                     </View>

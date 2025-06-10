@@ -12,6 +12,7 @@ import {
   import { DEFAULT_DP, GlobalStyles } from "../../constants/Styles";
   import { API_BASE_URL } from "../../constants/config";
   import { Ionicons } from '@expo/vector-icons';
+import { useUser } from "@/context/UserContext";
   
   // Relationship status enum
   enum RelationStatus {
@@ -24,6 +25,7 @@ import {
   const ListCard = ({ userData }:any) => {
     const [isSending, setSending] = useState(false);
     const [relationStatus, setRelationStatus] = useState<RelationStatus>(RelationStatus.LOADING);
+    const { userId } = useUser();
     
     // Check relationship status when component mounts
     useEffect(() => {
@@ -33,7 +35,7 @@ import {
     const checkRelationshipStatus = async () => {
       try {
         // We'll use the friends endpoint to get all friends and check if this user is in the list
-        const response = await fetch(`${API_BASE_URL}/friends?type=accept`, {
+        const response = await fetch(`${API_BASE_URL}/friends?type=accept&userId=${userId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
