@@ -2,7 +2,7 @@ import {Text, View, FlatList, Dimensions, TouchableOpacity, StyleSheet, Image, A
 import locationData from '@/constants/location';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import * as Network from 'expo-network';
-import {API_BASE_URL} from '../../constants/config';
+import {API_BASE_URL, API_RCM_URL} from '../../constants/config';
 
 const {width, height} = Dimensions.get('window')
 const CARD_WIDTH =  width - 190;
@@ -27,7 +27,10 @@ interface Location {
     [key: string]: any; // For other properties
 }
 
-export default function RecommendedSection({ categoryId, navigation }: PopularSectionProps) {
+// Đặt cacheRef ngoài component để giữ cache khi SectionList remount
+const recommendedSectionCacheRef = { data: [] as Location[] };
+
+const RecommendedSectionComponent = React.memo(function RecommendedSection({ categoryId, navigation }: PopularSectionProps) {
     const [likedItems, setLikedItems] = useState<LikedItems>({});
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,6 +39,8 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [onEndReachedCalledDuringMomentum, setOnEndReachedCalledDuringMomentum] = useState(false);
     const flatListRef = useRef(null);
+    // Sử dụng cacheRef ngoài component
+    const cacheRef = recommendedSectionCacheRef;
 
     const handlePress = (id: string) => {
         setLikedItems((prevState) => ({
@@ -44,35 +49,93 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
         }));
     };
 
-    const getAllLocations = async (pageNumber: number) => {
+    useEffect(() => {
+        if (cacheRef.data.length > 0) {
+            setLocations(cacheRef.data);
+            setLoading(false);
+            setHasMore(cacheRef.data.length > 0);
+            return;
+        }
+        getPopularLocations(1);
+    }, []);
+
+    // Hàm fetch có timeout
+    const fetchWithTimeout = (url: string, options = {}, timeout = 10000) => {
+        return Promise.race([
+            fetch(url, options),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), timeout)
+            )
+        ]);
+    };
+
+    const getPopularLocations = async (pageNumber: number) => {
         try {
-            if (isFetchingMore || !hasMore) return;
-      
-            setIsFetchingMore(true);
-      
-            const response = await fetch(`${API_BASE_URL}/alllocation?page=${pageNumber}&limit=10`);
-            const data = await response.json();
-      
-            if (data.isSuccess) {
+            setLoading(true);
+            if (pageNumber === 1 && cacheRef.data.length > 0) {
+                setLocations(cacheRef.data);
+                setLoading(false);
+                setHasMore(cacheRef.data.length > 0);
+                return;
+            }
+            const response = await fetchWithTimeout(`${API_RCM_URL}/recommend_legacy?case=popular`, {}, 10000); // 10s timeout
+            // Đảm bảo response là Response trước khi gọi .json()
+            if (!(response instanceof Response)) {
+                throw new Error('Không nhận được phản hồi hợp lệ từ máy chủ.');
+            }
+            let data = null;
+            let isJson = false;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    data = await response.json();
+                    isJson = true;
+                } catch (jsonErr) {
+                    const text = await response.text().catch(() => '');
+                    console.error('Popular API JSON parse error:', jsonErr, text);
+                    setHasMore(false);
+                    setLoading(false);
+                    setIsFetchingMore(false);
+                    return;
+                }
+            } else {
+                const text = await response.text();
+                console.error('Popular API response not ok:', text);
+                setHasMore(false);
+                setLoading(false);
+                setIsFetchingMore(false);
+                return;
+            }
+            if (isJson && data && data.recommendations) {
                 if (pageNumber === 1) {
-                    setLocations(data.data.data);
+                    setLocations(data.recommendations);
+                    // Lưu cache ngoài component
+                    cacheRef.data = data.recommendations;
                 } else {
-                    // Prevent duplicates when adding new items
-                    const newItems = data.data.data as Location[];
+                    const newItems = data.recommendations as Location[];
                     setLocations(prev => {
-                        const existingIds = new Set(prev.map(item => item._id));
-                        const uniqueNewItems = newItems.filter((item: Location) => !existingIds.has(item._id));
-                        return [...prev, ...uniqueNewItems];
+                        const existingIds = new Set(prev.map(item => item._id || item.location_id));
+                        const uniqueNewItems = newItems.filter((item: Location) => !existingIds.has(item._id || item.location_id));
+                        const merged = [...prev, ...uniqueNewItems];
+                        // Lưu cache ngoài component
+                        cacheRef.data = merged;
+                        return merged;
                     });
                 }
-      
-                setHasMore(data.data.data.length > 0);
-                setPage(pageNumber + 1); 
+                setHasMore(data.recommendations.length > 0);
+                setPage(pageNumber + 1);
             } else {
                 setHasMore(false);
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            setHasMore(false);
+            if (error instanceof TypeError && String(error).includes('Network request failed')) {
+                console.error('Popular API error:', error);
+            } else if (error.message === 'Request timeout') {
+                console.error('Popular API error: Request timeout');
+            } else {
+                console.error('Popular API error:', error);
+            }
         } finally {
             setIsFetchingMore(false);
             setLoading(false);
@@ -81,18 +144,18 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
 
     const loadMoreData = useCallback(() => {
         if (!onEndReachedCalledDuringMomentum && !isFetchingMore && hasMore) {
-            getAllLocations(page);
+            getPopularLocations(page);
             setOnEndReachedCalledDuringMomentum(true);
         }
     }, [page, isFetchingMore, hasMore, onEndReachedCalledDuringMomentum]);
 
-    useEffect(() => {
-        getAllLocations(1);
-    }, []);
+    // useEffect(() => {
+    //     getPopularLocations(1);
+    // }, []);
 
-    if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
-    }
+    // if (loading) {
+    //     return <ActivityIndicator size="large" color="#0000ff" />;
+    // }
 
     return (
         <View style={{height:CARD_HEIGHT+50}}>
@@ -103,7 +166,7 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
                 horizontal
                 snapToInterval={CARD_WIDTH_SPACING}
                 decelerationRate={"fast"}
-                keyExtractor={item => item._id}
+                keyExtractor={item => item._id || item.location_id}
                 onEndReached={loadMoreData}
                 onMomentumScrollBegin={() => setOnEndReachedCalledDuringMomentum(false)}
                 onEndReachedThreshold={0.2}
@@ -112,11 +175,11 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
                 removeClippedSubviews={true}
                 renderItem={({item, index}) => {
                     return (
-                        <TouchableOpacity onPress={() => navigation.navigate('detail-screen', { id: item._id })} style = {[
+                        <TouchableOpacity onPress={() => navigation.navigate('detail-screen', { id: item._id || item.location_id })} style = {[
                             styles.cardContainer,
                             {
                             marginLeft: 24,
-                            marginRight:  index === locationData.length - 1 ? 24 : 0}]}>
+                            marginRight:  index === locations.length - 1 ? 24 : 0}]}>
                             <View>
                                 <View style = {[styles.imageBox, ]}>
                                 <Image
@@ -128,17 +191,16 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
                                 style={styles.image}
                                 /> 
                                     <View style= {styles.titleBox}>
-                                        <View style = {[styles.textBox, {top: 10, width: 70}]}>
+                                        <View style = {[styles.textBox, {top: 10, width: 70}]}> 
                                             <Image source={require('@/assets/icons/star.png')}
                                             style = {styles.star}></Image>
                                             <Text style = {[styles.textrating, {fontSize: 15,}]}>{item.rating}</Text>
                                         </View>
-                                        
-                                        <TouchableOpacity onPress={()=>handlePress(item._id.toString())} style= {[styles.textBox2,{ bottom: 25,}]}>
+                                        <TouchableOpacity onPress={()=>handlePress(item._id?.toString() || item.location_id?.toString())} style= {[styles.textBox2,{ bottom: 25,}]}> 
                                             <Image source={require('@/assets/icons/heart.png')}
                                             style={[
                                             styles.heart, 
-                                            { tintColor: likedItems[item._id] ? 'red' : 'white' } 
+                                            { tintColor: likedItems[item._id || item.location_id] ? 'red' : 'white' } 
                                         ]}></Image>
                                         </TouchableOpacity>
                                     </View>
@@ -166,7 +228,9 @@ export default function RecommendedSection({ categoryId, navigation }: PopularSe
             )}
         </View>
     )
-}
+});
+
+export default RecommendedSectionComponent;
 
 const styles = StyleSheet.create({
 
@@ -252,6 +316,7 @@ const styles = StyleSheet.create({
         left:7,
         top:2,
         marginVertical: 2,
+        width: 160,
     },
     textrating: {
         fontWeight: 'medium',

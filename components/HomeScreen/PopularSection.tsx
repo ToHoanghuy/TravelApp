@@ -13,6 +13,7 @@ import {
 import locationData from '@/constants/location';
 import CustomModal from '../CollectionScreen/AddIntoCollection';
 import * as Network from 'expo-network';
+import { NetworkInfo } from 'react-native-network-info';
 import { API_BASE_URL } from '../../constants/config';
 
 const { width, height } = Dimensions.get('window');
@@ -102,7 +103,7 @@ export default function PopularSection({ categoryId, navigation }: PopularSectio
       if (data.isSuccess) {
         if (pageNumber === 1) {
           setLocations(data.data.data);
-          console.log('all location: ', data.data);
+          // console.log('all location: ', data.data);
         } else {
           setLocations(prev => [...prev, ...data.data.data]);
         }

@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Image, View, StyleSheet, TouchableOpacity, Text, Dimensions, ActivityIndicator, FlatList } from 'react-native';
 import locationData from '@/constants/location'
 import * as Network from 'expo-network';
-import { API_BASE_URL } from '../../constants/config';
+import { API_BASE_URL, API_RCM_URL } from '../../constants/config';
+import { useUser } from '../../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window')
 const CARD_WIDTH = width - 240;
@@ -24,7 +26,10 @@ interface Location {
     [key: string]: any; // For other properties
 }
 
-export default function DailySection({ categoryId, navigation }: DailySectionProps) {
+// Đặt cacheRef ngoài component để giữ cache khi SectionList remount
+const dailySectionCacheRef = { userId: null as string | null, data: [] as Location[] };
+
+const DailySectionComponent = React.memo(function DailySection({ categoryId, navigation }: DailySectionProps) {
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -32,79 +37,97 @@ export default function DailySection({ categoryId, navigation }: DailySectionPro
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [onEndReachedCalledDuringMomentum, setOnEndReachedCalledDuringMomentum] = useState(false);
     const flatListRef = useRef(null);
+    const { userId } = useUser();
+    // Sử dụng cacheRef ngoài component
+    const cacheRef = dailySectionCacheRef;
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     
     useEffect(() => {
-        if (categoryId === "all") {
-            getAllLocations(1);
+        // Nếu userId không đổi và đã có cache, dùng cache thay vì gọi API
+        if (cacheRef.userId === userId && cacheRef.data.length > 0) {
+            setLocations(cacheRef.data);
+            setLoading(false);
+            setHasMore(cacheRef.data.length > 0);
             return;
         }
-        if (categoryId) {
-            fetchPopularLocations(categoryId, 1);
-        }
-    }, [categoryId]);
+        getRealtimeRecommendations(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
-    const fetchPopularLocations = async (id: string, pageNumber: number) => {
-        if (isFetchingMore || !hasMore) return;
+    // Hàm fetch có timeout
+    const fetchWithTimeout = (url: string, options = {}, timeout = 10000) => {
+        return Promise.race([
+            fetch(url, options),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timeout')), timeout)
+            )
+        ]);
+    };
 
-        setIsFetchingMore(true);
+    const getRealtimeRecommendations = async (pageNumber: number) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/locationbycategory/${id}?page=${pageNumber}&limit=10`);
-            const data = await response.json();
-
-            if (data.isSuccess) {
-                if (pageNumber === 1) {
-                    setLocations(data.data.data);
-                } else {
-                    // Prevent duplicates when adding new items
-                    const newItems = data.data.data as Location[];
-                    setLocations(prev => {
-                        const existingIds = new Set(prev.map(item => item._id));
-                        const uniqueNewItems = newItems.filter((item: Location) => !existingIds.has(item._id));
-                        return [...prev, ...uniqueNewItems];
-                    });
+            setLoading(true);
+            setErrorMsg(null);
+            // Kiểm tra kết nối mạng trước khi fetch
+            const networkState = await Network.getNetworkStateAsync();
+            let lastLocationId = await AsyncStorage.getItem('lastViewedLocationId');
+            if (!networkState.isConnected) {
+                setErrorMsg('Không có kết nối mạng. Vui lòng kiểm tra lại.');
+                setLoading(false);
+                setIsFetchingMore(false);
+                return;
+            }
+            // Gọi API Python realtime_recommend với user_id
+            let url = `${API_RCM_URL}/realtime-recommend`;
+            if (userId) {
+                url += `?user_id=${userId}`;
+                if (lastLocationId) {
+                    url += `&product_id=${lastLocationId}&event_type=view`;
                 }
-
-                setHasMore(data.data.data.length > 0);
+            } else {
+                url += `?top_n=10`;
+            }
+            console.log('Fetching realtime recommendations from:', url);
+            const response = await fetchWithTimeout(url, {}, 10000); // 10s timeout
+            // Đảm bảo response là Response trước khi gọi .json()
+            if (!(response instanceof Response)) {
+                throw new Error('Không nhận được phản hồi hợp lệ từ máy chủ.');
+            }
+            const data = await response.json();
+            if (data.recommendations) {
+                let newLocations: Location[];
+                if (pageNumber === 1) {
+                    newLocations = data.recommendations;
+                    setLocations(newLocations);
+                } else {
+                    // Tránh trùng lặp
+                    const newItems = data.recommendations as Location[];
+                    newLocations = [
+                        ...locations,
+                        ...newItems.filter((item: Location) =>
+                            !(locations as Location[]).some(l => (l._id || l.location_id) === (item._id || item.location_id))
+                        )
+                    ];
+                    setLocations(newLocations);
+                }
+                // Cập nhật cache ngoài component
+                cacheRef.userId = userId || null;
+                cacheRef.data = newLocations;
+                setHasMore(data.recommendations.length > 0);
                 setPage(pageNumber + 1);
             } else {
                 setHasMore(false);
             }
-        } catch (error) {
-            console.error("Fetch error:", error);
-        } finally {
-            setIsFetchingMore(false);
-            setLoading(false);
-        }
-    };
-
-    const getAllLocations = async (pageNumber: number, isLoadMore = false) => {
-        try {
-            if (isFetchingMore || !hasMore) return;
-      
-            setIsFetchingMore(true);
-      
-            const response = await fetch(`${API_BASE_URL}/alllocation?page=${pageNumber}&limit=10`);
-            const data = await response.json();
-      
-            if (data.isSuccess) {
-                if (pageNumber === 1) {
-                    setLocations(data.data.data);
-                } else {
-                    const newLocations = data.data.data as Location[];
-                    setLocations(prev => {
-                        const existingIds = new Set(prev.map(item => item._id));
-                        const uniqueNewLocations = newLocations.filter((item: Location) => !existingIds.has(item._id));
-                        return isLoadMore ? [...prev, ...uniqueNewLocations] : newLocations;
-                    });
-                }
-      
-                setHasMore(data.data.data.length > 0);
-                setPage(pageNumber + 1); 
+        } catch (error: any) {
+            setHasMore(false);
+            if (error instanceof TypeError && String(error).includes('Network request failed')) {
+                setErrorMsg('Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng hoặc thử lại sau.');
+            } else if (error.message === 'Request timeout') {
+                setErrorMsg('Kết nối tới máy chủ quá lâu. Vui lòng thử lại sau.');
             } else {
-                console.error(data.error);
+                setErrorMsg('Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.');
             }
-        } catch (error) {
-            console.error(error);
+            console.log('Realtime Recommend API error:', error);
         } finally {
             setIsFetchingMore(false);
             setLoading(false);
@@ -113,14 +136,10 @@ export default function DailySection({ categoryId, navigation }: DailySectionPro
 
     const loadMoreData = useCallback(() => {
         if (!onEndReachedCalledDuringMomentum && !isFetchingMore && hasMore) {
-            if (categoryId === 'all') {
-                getAllLocations(page, true);
-            } else if (categoryId) {
-                fetchPopularLocations(categoryId, page);
-            }
+            getRealtimeRecommendations(page);
             setOnEndReachedCalledDuringMomentum(true);
         }
-    }, [categoryId, page, isFetchingMore, hasMore, onEndReachedCalledDuringMomentum]);
+    }, [page, isFetchingMore, hasMore, onEndReachedCalledDuringMomentum]);
 
     const renderItem = ({ item, index }: { item: Location, index: number }) => (
         <TouchableOpacity
@@ -161,6 +180,18 @@ export default function DailySection({ categoryId, navigation }: DailySectionPro
             <View style={{ padding: 20 }}>
                 <Text style={styles.titleText}>Gợi ý hằng ngày</Text>
                 <ActivityIndicator size="large" color="#0000ff" />
+                {errorMsg && <Text style={{ color: 'red', marginTop: 10 }}>{errorMsg}</Text>}
+            </View>
+        );
+    }
+    if (errorMsg && locations.length === 0) {
+        return (
+            <View style={{ padding: 20 }}>
+                <Text style={styles.titleText}>Gợi ý hằng ngày</Text>
+                <Text style={{ color: 'red', marginTop: 10 }}>{errorMsg}</Text>
+                <TouchableOpacity onPress={() => getRealtimeRecommendations(1)} style={{ marginTop: 10, backgroundColor: '#176FF2', padding: 10, borderRadius: 8 }}>
+                    <Text style={{ color: 'white', textAlign: 'center' }}>Thử lại</Text>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -173,7 +204,11 @@ export default function DailySection({ categoryId, navigation }: DailySectionPro
                 data={locations}
                 horizontal={false}
                 showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => item._id.toString()}
+                keyExtractor={(item, index) =>
+                  (item?._id?.toString?.() ||
+                   item?.location_id?.toString?.() ||
+                   index.toString())
+                }
                 contentContainerStyle={styles.container}
                 renderItem={renderItem}
                 numColumns={2}
@@ -198,7 +233,9 @@ export default function DailySection({ categoryId, navigation }: DailySectionPro
             />
         </View>
     );
-}
+});
+
+export default DailySectionComponent;
 
 const styles = StyleSheet.create({
     container: {
