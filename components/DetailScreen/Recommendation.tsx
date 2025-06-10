@@ -97,11 +97,11 @@ const getContentBasedRecommendations = async (pageNumber: number) => {
   } catch (error: any) {
     setHasMore(false);
     if (error instanceof TypeError && String(error).includes('Network request failed')) {
-      console.error('Content-based Recommend API error:', error);
+      console.log('Content-based Recommend API error:', error);
     } else if (error.message === 'Request timeout') {
-      console.error('Content-based Recommend API error: Request timeout');
+      console.log('Content-based Recommend API error: Request timeout');
     } else {
-      console.error('Content-based Recommend API error:', error);
+      console.log('Content-based Recommend API error:', error);
     }
   } finally {
     setIsFetchingMore(false);

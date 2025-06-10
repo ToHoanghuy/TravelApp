@@ -104,7 +104,7 @@ interface Friend {
           }
         } catch (error) {
           console.log('Error fetching friends:', error);
-          setError('No friends');
+          setError('Không có bạn bè nào');
         } finally {
           setLoading(false);
         }

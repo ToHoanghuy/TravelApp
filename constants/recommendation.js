@@ -29,7 +29,7 @@ export const saveEvent = async (eventData) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error saving event:', error);
+    console.log('Error saving event:', error);
     return { success: false, error: error.message };
   }
 };

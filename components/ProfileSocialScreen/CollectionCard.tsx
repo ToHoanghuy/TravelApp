@@ -7,6 +7,8 @@ import {
     View,
   } from "react-native";
   import React from "react";
+  import { POSTS } from "../../data/posts";
+  import { USERS } from "../../data/users";
   import { useNavigation } from "@react-navigation/native";
   const { height, width } = Dimensions.get("window");
   const size = width / 4 - 10;
@@ -19,7 +21,28 @@ import {
         style={styles.container}
       >
         <View style={styles.row}>
-          {/* Add image */}
+          <Image
+            source={{ uri: POSTS[0].picturePath }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <Image
+            source={{ uri: USERS[1].image }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        </View>
+        <View style={styles.row}>
+          <Image
+            source={{ uri: POSTS[0].picturePath }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <Image
+            source={{ uri: USERS[1].stories[0] }}
+            style={styles.image}
+            resizeMode="cover"
+          />
         </View>
         <View style={{ position: "absolute" }}>
           <Text
