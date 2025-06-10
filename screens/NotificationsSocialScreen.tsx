@@ -1,233 +1,217 @@
-import { Image, StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import React from "react";
-import { USERS } from "../data/users";
-import { GlobalStyles } from "../constants/Styles";
+import { StyleSheet, Text, View, FlatList, RefreshControl, ActivityIndicator, Alert } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import NotificationCard from "../components/NotificationsSocialScreen/NotificationCard";
 import { Ionicons } from "@expo/vector-icons";
-import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
-import { vi } from 'date-fns/locale';
+import SettingsIcon from "../components/AnimatedUI/SettingsIcon";
+import { GlobalStyles } from "../constants/Styles";
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import Header2 from "@/components/Header2";
+import { API_BASE_URL } from "@/constants/config";
+import { useUser } from '@/context/UserContext';
 
-interface NotificationCardProps {
-  mode: "LIKE" | "COMMENT" | "FOLLOW" | "FRIEND_REQUEST";
-  data?: {
+// Định nghĩa kiểu dữ liệu cho thông báo
+interface Notification {
+  _id: string;
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "FRIEND_REQUEST";
+  sender: {
     _id: string;
-    sender: {
-      _id: string;
-      userName: string;
-      userAvatar?: {
-        url: string;
-      };
-    };
-    createdAt: string;
-    status?: string;
-    postId?: string;
-    postImage?: string;
-  };
-  onAccept?: () => void;
-  onReject?: () => void;
-}
-
-export default function NotificationCard({ mode = "LIKE", data, onAccept, onReject }: NotificationCardProps) {
-    // Format thời gian
-    const formatTime = (timeString: string) => {
-      try {
-        const date = new Date(timeString);
-        return formatDistanceToNow(date, { addSuffix: true, locale: vi });
-      } catch (error) {
-        return "Vừa xong";
-      }
-    };
-
-    // Nếu có dữ liệu thực, hiển thị dữ liệu đó
-    if (data) {
-        return (
-            <View style={styles.container}>
-                <View style={{ flexDirection: "row", width: mode === "FRIEND_REQUEST" ? "50%" : "70%" }}>
-                    <Image
-                        source={{ 
-                            uri: data.sender?.userAvatar?.url || 
-                                 'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png' 
-                        }}
-                        style={styles.avatar}
-                    />
-                    
-                    <View style={{ marginHorizontal: 20, justifyContent: "space-between" }}>
-                        <View style={{ marginBottom: 10 }}>
-                            <Text style={styles.userName}>
-                                {data.sender?.userName || "Người dùng"}
-                            </Text>
-                            <Text style={styles.actionText}>
-                                {mode === "LIKE" && "đã thích ảnh của bạn"}
-                                {mode === "COMMENT" && "đã bình luận về ảnh của bạn"}
-                                {mode === "FOLLOW" && "đã bắt đầu theo dõi bạn"}
-                                {mode === "FRIEND_REQUEST" && "đã gửi lời mời kết bạn"}
-                            </Text>
-                        </View>
-
-                        <Text style={styles.timeText}>{formatTime(data.createdAt)}</Text>
-                    </View>
-                </View>
-                
-                {(mode === "LIKE" || mode === "COMMENT") && data.postImage && (
-                    <View style={{ width: "20%", height: 80 }}>
-                        <Image
-                            source={{ uri: data.postImage }}
-                            style={styles.postImage}
-                        />
-                        <View style={styles.iconContainer}>
-                            <Ionicons
-                                name={mode === "LIKE" ? "heart" : "chatbubble-ellipses"}
-                                size={12}
-                                color={GlobalStyles.colors.blue}
-                            />
-                        </View>
-                    </View>
-                )}
-
-                {mode === "FRIEND_REQUEST" && (
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity 
-                            style={styles.acceptButton}
-                            onPress={onAccept}
-                        >
-                            <Text style={styles.buttonText}>Chấp nhận</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={styles.rejectButton}
-                            onPress={onReject}
-                        >
-                            <Text style={styles.buttonText}>Từ chối</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </View>
-        );
+    userName: string;
+    userAvatar?: {
+      url: string;
     }
-
-    // Fallback cho các thông báo mẫu (demo)
-    return (
-        <View style={styles.container}>
-            <View style={{ flexDirection: "row", width: "70%" }}>
-                <Image
-                    source={{ uri: USERS[1].image }}
-                    style={styles.avatar}
-                />
-                
-                <View style={{ marginHorizontal: 20, justifyContent: "space-between" }}>
-                    <View style={{ marginBottom: 10 }}>
-                        <Text style={styles.userName}>
-                            John Doe
-                        </Text>
-                        <Text style={styles.actionText}>
-                            {mode === "LIKE" && "đã thích ảnh của bạn"}
-                            {mode === "COMMENT" && "đã bình luận về ảnh của bạn"}
-                            {mode === "FOLLOW" && "đã bắt đầu theo dõi bạn"}
-                            {mode === "FRIEND_REQUEST" && "đã gửi lời mời kết bạn"}
-                        </Text>
-                    </View>
-
-                    <Text style={styles.timeText}>2 phút trước</Text>
-                </View>
-            </View>
-            {(mode === "LIKE" || mode === "COMMENT") && (
-                <View style={{ width: "20%", height: 80 }}>
-                    <Image
-                        source={{ uri: USERS[1].stories[0] }}
-                        style={styles.postImage}
-                    />
-                    <View style={styles.iconContainer}>
-                        <Ionicons
-                            name={mode === "LIKE" ? "heart" : "chatbubble-ellipses"}
-                            size={12}
-                            color={GlobalStyles.colors.blue}
-                        />
-                    </View>
-                </View>
-            )}
-            
-            {mode === "FRIEND_REQUEST" && (
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity 
-                        style={styles.acceptButton}
-                        onPress={onAccept}
-                    >
-                        <Text style={styles.buttonText}>Chấp nhận</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={styles.rejectButton}
-                        onPress={onReject}
-                    >
-                        <Text style={styles.buttonText}>Từ chối</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
+  };
+  recipient: string;
+  createdAt: string;
+  read: boolean;
+  status?: string;
+  postId?: string;
+  postImage?: string;
 }
 
+export default function NotificationsScreen({ navigation, route }: any) {
+  const { userId } = useUser();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Lấy thông báo từ API
+  const fetchNotifications = async () => {
+    if (!userId) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể lấy thông báo');
+      }
+
+      const data = await response.json();
+      console.log('Notifications data:', data);
+      
+      if (data.isSuccess) {
+        setNotifications(data.data);
+      } else {
+        console.error('API error:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Xử lý khi người dùng chấp nhận lời mời kết bạn
+  const handleAcceptFriendRequest = async (notificationId: string, senderId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/respond-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          notificationId,
+          requestId: senderId,
+          accept: true
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        Alert.alert('Thành công', 'Đã chấp nhận lời mời kết bạn');
+        // Cập nhật lại danh sách thông báo
+        fetchNotifications();
+      } else {
+        Alert.alert('Lỗi', data.error || 'Không thể chấp nhận lời mời kết bạn');
+      }
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xử lý yêu cầu');
+    }
+  };
+
+  // Xử lý khi người dùng từ chối lời mời kết bạn
+  const handleRejectFriendRequest = async (notificationId: string, senderId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/respond-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          notificationId,
+          requestId: senderId,
+          accept: false
+        }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        Alert.alert('Thành công', 'Đã từ chối lời mời kết bạn');
+        // Cập nhật lại danh sách thông báo
+        fetchNotifications();
+      } else {
+        Alert.alert('Lỗi', data.error || 'Không thể từ chối lời mời kết bạn');
+      }
+    } catch (error) {
+      console.error('Error rejecting friend request:', error);
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xử lý yêu cầu');
+    }
+  };
+
+  // Hàm refresh khi kéo xuống để làm mới
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [userId]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+      title: "Thông báo",
+      headerRight: () => {
+        return (
+          <View style={{ marginRight: 20 }}>
+            <SettingsIcon onPress={() => {}} />
+          </View>
+        );
+      },
+    });
+  }, []);
+
+  // Render từng thông báo tùy theo loại
+  const renderItem = ({ item }: { item: Notification }) => (
+    <NotificationCard 
+      mode={item.type}
+      data={item}
+      onAccept={() => handleAcceptFriendRequest(item._id, item.sender._id)}
+      onReject={() => handleRejectFriendRequest(item._id, item.sender._id)}
+    />
+  );
+
+  return (
+    <View style={styles.container}>
+      <Header2 title="Thông báo" />
+      <StatusBar backgroundColor={GlobalStyles.colors.primary} />
+
+      {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={GlobalStyles.colors.primary500} />
+        </View>
+      ) : notifications.length > 0 ? (
+        <FlatList
+          data={notifications}
+          renderItem={renderItem}
+          keyExtractor={(item) => item._id}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="notifications-off-outline" size={64} color="gray" />
+          <Text style={styles.emptyText}>Không có thông báo nào</Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: "#E7E9F3",
-        borderRadius: 20,
-        marginHorizontal: 10,
-        marginVertical: 5,
-        padding: 15,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    avatar: {
-        width: 50,
-        height: 50,
-        resizeMode: "cover",
-        borderRadius: 50,
-    },
-    userName: {
-        fontWeight: "bold", 
-        fontSize: 18, 
-        color: "black"
-    },
-    actionText: {
-        fontSize: 14,
-        color: GlobalStyles.colors.purple
-    },
-    timeText: {
-        fontSize: 12,
-        color: "gray"
-    },
-    postImage: {
-        flex: 1,
-        resizeMode: "cover",
-        borderRadius: 10,
-    },
-    iconContainer: {
-        backgroundColor: "white",
-        borderRadius: 50,
-        padding: 3,
-        position: "absolute",
-        right: -5,
-        top: -5,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '45%'
-    },
-    acceptButton: {
-        backgroundColor: GlobalStyles.colors.blue,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 20,
-        marginRight: 5,
-    },
-    rejectButton: {
-        backgroundColor: GlobalStyles.colors.red,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 20,
-    },
-    buttonText: {
-        color: 'white',
-        fontWeight: '500',
-    }
+  container: { 
+    flex: 1, 
+    backgroundColor: GlobalStyles.colors.primary 
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
+  emptyText: {
+    marginTop: 10,
+    color: 'gray',
+    fontSize: 16,
+  }
 });
