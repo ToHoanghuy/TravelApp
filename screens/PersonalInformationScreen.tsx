@@ -3,7 +3,6 @@ import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView,
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
-// import DatePicker from 'react-native-date-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useUser } from '@/context/UserContext';
 import {API_BASE_URL} from '../constants/config';
