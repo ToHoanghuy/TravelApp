@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import {Button, Text, View,  StyleSheet, Image, TouchableOpacity, TextInput, NativeSyntheticEvent, TextInputChangeEventData, Alert} from 'react-native';
-// import Checkbox from 'expo-checkbox';
+//import CheckBox from '@react-native-community/checkbox';
+import Checkbox from 'expo-checkbox';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 import { Ionicons, FontAwesome6 } from '@expo/vector-icons';
+import { useUser } from '@/context/UserContext';
+import {API_BASE_URL} from '../../constants/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
@@ -14,6 +18,8 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
     const [toggleCheckBox, setToggleCheckBox] = useState(false);
     const [secureTextEntry, setSecureTextEntry] = useState(true);
 
+    const { setUserId } = useUser();
+
     const handleSignUp = () => {
         console.log('Email:', email);
         console.log('Password:', password);
@@ -21,6 +27,30 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
     };
 
     const handleLogin = async () => {
+        console.log('url:', API_BASE_URL);
+        try {
+            const response = await fetch(`${API_BASE_URL}/signin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userEmail: email, userPassword: password }),
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('a', password)
+            const data = await response.json(); 
+            console.log(data);
+            if (response.ok) {
+                const userId = data.data;  
+                setUserId(userId?._id);  
+                await AsyncStorage.setItem('userData', JSON.stringify(userId));                console.log('User ID:', userId);
+                navigation.navigate('main-screen');
+            } else {
+                Alert.alert('Login Failed', data.error || 'Please try again.');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('An error occurred', 'Please check your connection and try again.');
+        }
     };
 
     const handleCheckBox = () => {
@@ -44,6 +74,22 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
         <View style={styles.container}>
             <Text style={styles.textsignup}>Đăng nhập ngay</Text>
             <Text style={styles.text1}>Đăng nhập để sử dụng app của chúng tôi</Text>
+            <Text style={styles.text2}>Đăng nhập với</Text>
+
+            <View style={styles.buttonRow}>
+                <TouchableOpacity
+                    style={styles.circleButtonGoogle}
+                    onPress={() => navigation.navigate('main-screen')}
+                >
+                    <Image source={require('../../assets/icons/icongoogle.png')} style={styles.buttonIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.circleButtonFacebook}
+                    onPress={() => navigation.navigate('main-screen')}
+                >
+                    <Image source={require('../../assets/icons/iconfacebook.png')} style={styles.buttonIcon} />
+                </TouchableOpacity>
+            </View>
             <View style ={styles.backgroundinput}>
                 <TextInput
                     style={styles.input}
@@ -72,13 +118,14 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
 
             <View style={styles.checkboxContainer}>
                 <TouchableOpacity onPress={handleCheckBox}>
-                    <Text style={styles.checkboxText}>Quên mật khẩu?</Text>
+                    <Text style={styles.checkboxText}>quên mật khẩu?</Text>
                 </TouchableOpacity>
             </View>
 
             <TouchableOpacity
                 style={styles.signupButton}
                 onPress={handleLogin}
+                //onPress={() => navigation.navigate('main-screen')}
             >
                 <Text style={styles.signupButtonText}>Đăng nhập</Text>
             </TouchableOpacity>
@@ -86,6 +133,7 @@ export default function LoginScreen ({navigation}: {navigation: NativeStackNavig
             <Text style={styles.text3}>Chưa có tài khoản? </Text>
             <TouchableOpacity
                 style={styles.text4}
+                onPress={() => navigation.navigate('register2')}
             >
                 <Text style = {{fontSize:18,fontWeight:'bold',color:'#196EEE'}}> Đăng ký</Text>
             </TouchableOpacity>

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import {KeyboardAvoidingView, Button, Text, View,  StyleSheet, Image, TouchableOpacity, TextInput, Alert, Platform} from 'react-native';
+//import CheckBox from '@react-native-community/checkbox';
 import Checkbox from 'expo-checkbox';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
+import {API_BASE_URL} from '../../constants/config';
 
 export default function RegisterScreen2 ({navigation}: {navigation: NativeStackNavigatorProps}) {
 
@@ -20,6 +22,32 @@ export default function RegisterScreen2 ({navigation}: {navigation: NativeStackN
 
         console.log('Email:', email);
         console.log('Password:', password);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userEmail: email,
+                    userPassword: password,
+                }),
+            });
+
+            const data = await response.json();
+
+            console.log('Response:', data);
+            if (response.ok) {
+                Alert.alert('Thành công', 'Tạo tài khoản thành công.');
+                //navigation.navigate('login'); // Chuyển hướng đến trang đăng nhập
+            } else {
+                Alert.alert('Lỗi', data.error || 'Có lỗi xảy ra.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Alert.alert('Lỗi', 'Không thể kết nối với máy chủ. Vui lòng thử lại.');
+        }
     };
 
     const handleCheckBox = () => {
@@ -44,6 +72,7 @@ export default function RegisterScreen2 ({navigation}: {navigation: NativeStackN
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.circleButtonFacebook}
+                        onPress={() => navigation.navigate('main-screen')}
                     >
                         <Image source={require('../../assets/icons/iconfacebook.png')} style={styles.buttonIcon} />
                     </TouchableOpacity>
