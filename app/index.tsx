@@ -50,7 +50,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>()
 export default function App() {
   return (
 
-    <NavigationContainer>
+    <NavigationContainer independent={true}>
       <UserProvider>
         <Stack.Navigator
           initialRouteName='login'>

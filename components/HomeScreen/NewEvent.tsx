@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Text,
@@ -15,9 +13,8 @@ import {
 import locationData from '@/constants/location';
 import CustomModal from '../CollectionScreen/AddIntoCollection';
 import * as Network from 'expo-network';
-// import { NetworkInfo } from 'react-native-network-info';
+import { NetworkInfo } from 'react-native-network-info';
 import { API_BASE_URL } from '../../constants/config';
-// import LuckyWheelScreen from '@/screen/LuckyWheelScreen';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width - 30;
@@ -57,7 +54,31 @@ interface PopularSectionProps {
   navigation: any;
 }
 
-export default function NewEventSection({ categoryId, navigation }: PopularSectionProps) {
+// Đặt cacheRef ngoài component để giữ cache khi SectionList remount
+const newEventSectionCacheRef = { data: [] };
+
+const NewEventSection = React.memo(function NewEventSection({ categoryId, navigation }: any) {
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const cacheRef = newEventSectionCacheRef;
+
+    useEffect(() => {
+        if (cacheRef.data.length > 0) {
+            setEvents(cacheRef.data);
+            setLoading(false);
+            return;
+        }
+        fetchEvents();
+    }, []);
+
+    const fetchEvents = async () => {
+        setLoading(true);
+        // ...fetch API logic...
+        // Sau khi fetch thành công:
+        // cacheRef.data = data;
+        setLoading(false);
+    };
+
   return (
     <View style={{ height: CARD_HEIGHT + 70 }}>
       <Text style={styles.titleText}>sự kiện nổi bật</Text>
@@ -81,7 +102,7 @@ export default function NewEventSection({ categoryId, navigation }: PopularSecti
       
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
     container: {
@@ -120,3 +141,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default NewEventSection;

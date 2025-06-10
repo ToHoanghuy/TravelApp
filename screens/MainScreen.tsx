@@ -1,5 +1,4 @@
 import {Image,StyleSheet} from 'react-native'
-import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "@/screens/HomeScreen";
 import TicketScreen from "@/screens/TicketScreen";

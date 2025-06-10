@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Alert, Platform } from 'react-native';
+import React from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 import { NativeStackNavigatorProps } from 'react-native-screens/lib/typescript/native-stack/types';
 
 export default function ChatScreen({ navigation }: {navigation: NativeStackNavigatorProps}) {
