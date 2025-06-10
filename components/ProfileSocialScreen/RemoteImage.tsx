@@ -14,6 +14,16 @@ import React from "react";
   const RemoteImage = ({ imageUri, style }:any) => {
     const [ratio, setRatio] = useState(1);
     const [safeUri, setSafeUri] = useState<string>("");
+
+    // Hàm tự động fix link Cloudinary
+    // const getSafeImageUrl = (url: string) => {
+    //   if (!url) return "";
+    //   if (url.includes("?")) {
+    //     return url + "&f=jpg&q_auto";
+    //   }
+    //   return url + "?f=jpg&q_auto";
+    // };
+    
     const getSafeImageUrl = (url: string) => {
       if (!url) return "";
       if (url.includes("/upload/")) {

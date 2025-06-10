@@ -596,7 +596,7 @@ const recalculateTotalPrice = async (voucherObj?: any) => {
             <View style={styles.bookingcontainer}>
                 <View style={{flexDirection:'row'}}>
                     <Text style={styles.yourbooking}>Thông tin liên lạc</Text>
-                    <Text style={{color:'red', fontSize:20, marginLeft:5}}>*</Text>
+                    {/* <Text style={{color:'red', fontSize:20, marginLeft:5}}>*</Text> */}
                 </View>
                 <TouchableOpacity 
                 style={styles.rowwithicon}         

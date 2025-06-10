@@ -16,6 +16,7 @@ import {
   import { Ionicons } from "@expo/vector-icons";
  import PressEffect from "../../UI/PressEffect";
   import { API_BASE_URL } from "../../../constants/config";
+import { useUser } from "@/context/UserContext";
   // https://github.com/birdwingo/react-native-instagram-stories?tab=readme-ov-file
   
   // Initial data structure with self user for the "Your Story" option
@@ -51,6 +52,7 @@ interface Friend {
   };
   
   const Stories: React.FC<StoriesProps> = ({ followingsData }) => {
+    const { userId } = useUser();
     const storiesRef = useRef(null);
     const [showStory, setShowStory] = useState(false);
     const ScrollX = useRef(new Animated.Value(0)).current;
@@ -67,7 +69,7 @@ interface Friend {
       const fetchFriends = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`${API_BASE_URL}/friends?type=accept`, {
+          const response = await fetch(`${API_BASE_URL}/friends?type=accept&userId=${userId}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -81,15 +83,15 @@ interface Friend {
           
           const data = await response.json();
           
-          if (data.isSuccess && Array.isArray(data.data)) {
+          if (data.isSuccess) {
             setFriends(data.data);
-            console.log("Friends data:", data.data);
+            console.log("Friends data:", data);
             
           // Transform friends data into the format expected by the Stories component
             const friendStories = data.data.map((friend: Friend, index: number) => ({
-              user_id: friend.userId,
-              user_image: friend.userAvatar.url || DEFAULT_DP,
-              user_name: friend.userName || "Friend",  // Ensure we always have a user name
+              user_id: friend?.userId,
+              user_image: friend?.userAvatar?.url || DEFAULT_DP,
+              user_name: friend?.userName || "Friend",  // Ensure we always have a user name
               active: Math.random() > 0.7, // Randomly set some friends as active (for demo)
               stories: [
                 {
@@ -104,7 +106,7 @@ interface Friend {
           }
         } catch (error) {
           console.log('Error fetching friends:', error);
-          setError('No friends');
+          setError('Không có bạn bè nào');
         } finally {
           setLoading(false);
         }

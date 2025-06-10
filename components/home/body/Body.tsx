@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import Feed from "./Feed";
+import Video from "./Video";
 import { GlobalStyles } from "../../../constants/Styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 //import TopTabBar from "./TopTabBar";
@@ -61,6 +62,9 @@ const Body = ({ StoryTranslate }: any) => {
     >
       <TopTab.Screen name="Feed">
         {() => <Feed StoryTranslate={StoryTranslate} userData={userData} />}
+      </TopTab.Screen>
+      <TopTab.Screen name="Video">
+        {() => <Video StoryTranslate={StoryTranslate} />}
       </TopTab.Screen>
     </TopTab.Navigator>
     

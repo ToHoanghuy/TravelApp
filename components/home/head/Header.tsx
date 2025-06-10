@@ -49,6 +49,9 @@ export default function Header({ navigation }: {navigation: NativeStackNavigator
       <Text style={{ color: "rgb(0, 0, 0)", fontSize: 30, fontWeight: "bold" }}>
         Social
       </Text>
+      <Text style={{ color: "rgb(0, 0, 0)", fontSize: 15 }}>
+        Chào mừng bạn đến với Travel Social
+      </Text>
     </View>
 
     <View style={styles.iconsContainer}>

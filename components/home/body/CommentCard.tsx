@@ -1,7 +1,7 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { GlobalStyles } from "../../constants/Styles";
+import { GlobalStyles } from "../../../constants/Styles";
 
 interface CommentCardProps {
   comment: {
