@@ -41,4 +41,5 @@ export type SelectedRoom = {
     'voucher-screen': undefined;
     'post-detail-screen': { postId: string };
     'friends-list-screen': { userId: string };
+    
   };
